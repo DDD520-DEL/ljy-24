@@ -1,0 +1,104 @@
+import { useAppStore } from '@/store/appStore';
+import { getHeatColorClass, getHeatLabel, getHeatBgColor } from '@/utils/heatmap';
+import { Snowflake, Flame, Users } from 'lucide-react';
+
+export default function TrainHeatmap() {
+  const { currentLineStats, lines, selectedLineId } = useAppStore();
+  const line = lines.find((l) => l.id === selectedLineId);
+
+  if (!line || !currentLineStats) {
+    return (
+      <div className="bg-metro-card border border-metro-border rounded-2xl p-12 text-center">
+      <div className="animate-pulse-slow">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-metro-border flex items-center justify-center">
+          <Users className="w-8 h-8 text-slate-500" />
+        </div>
+        <p className="text-slate-500">正在加载热力图数据...</p>
+      </div>
+    </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span
+            className="w-4 h-4 rounded-full"
+            style={{ backgroundColor: line.color }}
+          />
+          <h3 className="font-display font-bold text-xl text-white">{line.name} 温度分布</h3>
+        </div>
+        <div className="text-sm text-slate-400">
+          共 <span className="text-white font-semibold">{currentLineStats.totalVotes}</span> 票
+        </div>
+      </div>
+
+      <div className="bg-metro-card border border-metro-border rounded-2xl p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-1.5">
+            <Snowflake className="w-4 h-4 text-blue-400" />
+            <span className="text-xs text-slate-400">冷</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-slate-400">热</span>
+            <Flame className="w-4 h-4 text-orange-400" />
+          </div>
+        </div>
+
+        <div className="h-2 rounded-full overflow-hidden bg-metro-border flex mb-6">
+          <div className="flex-1 heat-cold" />
+          <div className="flex-1 heat-cool" />
+          <div className="flex-1 heat-comfort" />
+          <div className="flex-1 heat-warm" />
+          <div className="flex-1 heat-hot" />
+        </div>
+
+        <div className="overflow-x-auto hide-scrollbar">
+          <div
+            className="flex gap-2 min-w-max pb-2"
+            style={{ opacity: 0, animation: 'fadeIn 0.5s ease-out forwards' }}
+          >
+            {currentLineStats.carriages.map((carriage, idx) => (
+              <div
+                key={carriage.carriageNumber}
+                style={{ animationDelay: `${idx * 80}ms` }}
+                className="animate-slide-up"
+              >
+                <div
+                  className={`relative w-20 sm:w-24 h-28 sm:h-32 rounded-xl ${getHeatColorClass(carriage.temperatureScore)} shadow-lg overflow-hidden group transition-all duration-300 hover:scale-105 hover:shadow-xl`}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
+                  <div className="relative z-10 h-full flex flex-col items-center justify-between p-2 text-white">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-black/30 backdrop-blur-sm">
+                      <span className="font-bold font-display text-lg">{carriage.carriageNumber}</span>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-[11px] opacity-90 font-medium">{getHeatLabel(carriage.temperatureScore)}</div>
+                      <div className="text-[10px] opacity-70">{carriage.totalCount}票</div>
+                    </div>
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-black/20 backdrop-blur-sm">
+                    <div
+                      className="h-full"
+                      style={{
+                        width: `${carriage.totalCount > 0 ? (carriage.hotCount / carriage.totalCount) * 100 : 0}%`,
+                        backgroundColor: getHeatBgColor(carriage.temperatureScore),
+                        opacity: 0.6,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-2 flex justify-around px-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-metro-border" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-metro-border" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
