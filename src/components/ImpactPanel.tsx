@@ -1,13 +1,29 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAppStore } from '@/store/appStore';
 import { Vote, Route, Users, Sparkles, Loader2 } from 'lucide-react';
+import type { UserImpactStats } from 'shared/types.js';
 
 export default function ImpactPanel() {
   const { userImpactStats, userImpactLoading, fetchUserImpactStats } = useAppStore();
+  const prevStatsRef = useRef<UserImpactStats | null>(null);
+  const statsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchUserImpactStats();
   }, [fetchUserImpactStats]);
+
+  useEffect(() => {
+    if (userImpactStats && prevStatsRef.current && 
+        (userImpactStats.totalVotes !== prevStatsRef.current.totalVotes ||
+         userImpactStats.linesCovered !== prevStatsRef.current.linesCovered ||
+         userImpactStats.helpCount !== prevStatsRef.current.helpCount)) {
+      statsRef.current?.classList.add('animate-pulse-slow');
+      setTimeout(() => {
+        statsRef.current?.classList.remove('animate-pulse-slow');
+      }, 1000);
+    }
+    prevStatsRef.current = userImpactStats;
+  }, [userImpactStats]);
 
   const stats = [
     {
@@ -46,7 +62,7 @@ export default function ImpactPanel() {
         <h2 className="text-sm font-medium text-slate-400">我的影响力</h2>
         {userImpactLoading && <Loader2 className="w-3.5 h-3.5 text-slate-500 animate-spin" />}
       </div>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-3" ref={statsRef}>
         {stats.map((stat, idx) => {
           const Icon = stat.icon;
           return (

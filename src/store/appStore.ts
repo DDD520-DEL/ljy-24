@@ -195,6 +195,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         if (get().voteHistory.length > 0) {
           get().fetchVoteHistory();
         }
+        get().fetchUserImpactStats();
         return true;
       } else {
         set({ error: data.error || '提交失败', loading: false });
