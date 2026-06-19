@@ -86,3 +86,25 @@ export interface TemperatureAnomaly {
   suggestedAvoidEnd: number;
   description: string;
 }
+
+export interface Feedback {
+  id: string;
+  lineId: string;
+  carriageNumber: number;
+  content: string;
+  level: VoteLevel;
+  timestamp: number;
+  userId?: string;
+  voteId?: string;
+}
+
+export interface FeedbackCountMap {
+  [carriageNumber: number]: number;
+}
+
+export interface FeedbackListResponse {
+  lineId: string;
+  carriageNumber: number;
+  total: number;
+  feedbacks: Feedback[];
+}

@@ -1,4 +1,4 @@
-import type { MetroLine, Vote, VoteLevel, TimeSlot, FavoriteLine } from '../../shared/types.js';
+import type { MetroLine, Vote, VoteLevel, TimeSlot, FavoriteLine, Feedback, FeedbackCountMap } from '../../shared/types.js';
 
 const LINES: MetroLine[] = [
   { id: 'line1', name: '1号线', color: '#C23A30', carriageCount: 6 },
@@ -198,14 +198,107 @@ function generateMockUserVotes(baseVotes: Vote[], lines: MetroLine[], userId: st
   return userVotes;
 }
 
+const COLD_FEEDBACKS = [
+  '空调太冷了，冻得直哆嗦',
+  '建议调高温度，穿外套都冷',
+  '风太大，吹得头疼',
+  '温度太低，老人小孩受不了',
+  '冷气太足，下车后温差大容易感冒',
+  '出风口对着吹，膝盖疼',
+  '像进了冰窖一样',
+];
+
+const COMFORTABLE_FEEDBACKS = [
+  '温度刚刚好，很舒服',
+  '这个温度非常舒适',
+  '空调温度调得很合适',
+  '体感不错，点赞',
+  '温度宜人，乘车体验好',
+  '不冷不热刚刚好',
+  '完美的温度，继续保持',
+];
+
+const HOT_FEEDBACKS = [
+  '太热了，闷得慌',
+  '空调没开吗？好热',
+  '人多又热，像蒸桑拿',
+  '赶紧调低点温度吧',
+  '汗流浃背，太难受了',
+  '空气不流通，又闷又热',
+  '温度太高，容易晕车',
+];
+
+function generateMockFeedbacks(votes: Vote[]): Feedback[] {
+  const feedbacks: Feedback[] = [];
+  const now = Date.now();
+
+  for (const vote of votes) {
+    if (Math.random() > 0.25) continue;
+
+    const templates = vote.level === 'cold'
+      ? COLD_FEEDBACKS
+      : vote.level === 'comfortable'
+      ? COMFORTABLE_FEEDBACKS
+      : HOT_FEEDBACKS;
+
+    const content = templates[Math.floor(Math.random() * templates.length)];
+
+    feedbacks.push({
+      id: generateId(),
+      lineId: vote.lineId,
+      carriageNumber: vote.carriageNumber,
+      content,
+      level: vote.level,
+      timestamp: vote.timestamp,
+      voteId: vote.id,
+    });
+  }
+
+  for (let i = 0; i < 80; i++) {
+    const line = LINES[Math.floor(Math.random() * LINES.length)];
+    const carriage = 1 + Math.floor(Math.random() * line.carriageCount);
+    const minutesAgo = Math.floor(Math.random() * 60 * 24 * 3);
+    const timestamp = now - minutesAgo * 60 * 1000;
+    const hour = new Date(timestamp).getHours();
+    const timeSlot = getTimeSlotFromHour(hour);
+
+    let level: VoteLevel;
+    const rand = Math.random();
+    if (rand < 0.3) level = 'cold';
+    else if (rand < 0.75) level = 'comfortable';
+    else level = 'hot';
+
+    const templates = level === 'cold'
+      ? COLD_FEEDBACKS
+      : level === 'comfortable'
+      ? COMFORTABLE_FEEDBACKS
+      : HOT_FEEDBACKS;
+    const content = templates[Math.floor(Math.random() * templates.length)];
+
+    feedbacks.push({
+      id: generateId(),
+      lineId: line.id,
+      carriageNumber: carriage,
+      content,
+      level,
+      timestamp,
+    });
+    timeSlot;
+  }
+
+  return feedbacks.sort((a, b) => b.timestamp - a.timestamp);
+}
+
 class DataStore {
   private votes: Vote[] = [];
+  private feedbacks: Feedback[] = [];
   private favorites: Map<string, FavoriteLine[]> = new Map();
   private initializedUsers: Set<string> = new Set();
 
   constructor() {
     const baseVotes = generateMockVotes();
     this.votes = [...baseVotes];
+    this.feedbacks = generateMockFeedbacks(baseVotes);
     this.ensureUserHistoryData('user_mock_history');
   }
 
@@ -338,6 +431,43 @@ class DataStore {
     userFavorites.splice(index, 1);
     this.favorites.set(userId, userFavorites);
     return true;
+  }
+
+  addFeedback(
+    lineId: string,
+    carriageNumber: number,
+    content: string,
+    level: VoteLevel,
+    userId?: string,
+    voteId?: string,
+  ): Feedback {
+    const feedback: Feedback = {
+      id: generateId(),
+      lineId,
+      carriageNumber,
+      content: content.trim().slice(0, 50),
+      level,
+      timestamp: Date.now(),
+      userId,
+      voteId,
+    };
+    this.feedbacks.unshift(feedback);
+    return feedback;
+  }
+
+  getFeedbacksByCarriage(lineId: string, carriageNumber: number, limit = 50): Feedback[] {
+    return this.feedbacks
+      .filter((f) => f.lineId === lineId && f.carriageNumber === carriageNumber)
+      .slice(0, limit);
+  }
+
+  getFeedbackCountMap(lineId: string): FeedbackCountMap {
+    const countMap: FeedbackCountMap = {};
+    for (const f of this.feedbacks) {
+      if (f.lineId !== lineId) continue;
+      countMap[f.carriageNumber] = (countMap[f.carriageNumber] || 0) + 1;
+    }
+    return countMap;
   }
 }
 

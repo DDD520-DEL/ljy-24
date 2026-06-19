@@ -6,6 +6,7 @@ import TimeSlotPicker from '@/components/TimeSlotPicker';
 import TrainHeatmap from '@/components/TrainHeatmap';
 import StatsCards from '@/components/StatsCards';
 import TrendChart from '@/components/TrendChart';
+import FeedbackListModal from '@/components/FeedbackListModal';
 
 export default function Heatmap() {
   const {
@@ -13,6 +14,7 @@ export default function Heatmap() {
     fetchStats,
     fetchTrend,
     fetchFavorites,
+    fetchFeedbackCounts,
     lines,
     selectedLineId,
     selectedTimeSlot,
@@ -29,8 +31,9 @@ export default function Heatmap() {
     if (selectedLineId) {
       fetchStats();
       fetchTrend();
+      fetchFeedbackCounts();
     }
-  }, [selectedLineId, selectedTimeSlot, fetchStats, fetchTrend]);
+  }, [selectedLineId, selectedTimeSlot, fetchStats, fetchTrend, fetchFeedbackCounts]);
 
   return (
     <div className="min-h-screen">
@@ -74,6 +77,8 @@ export default function Heatmap() {
       <footer className="py-8 text-center text-slate-600 text-xs animate-fade-in">
         数据实时更新 · 地铁温度计
       </footer>
+
+      <FeedbackListModal />
     </div>
   );
 }

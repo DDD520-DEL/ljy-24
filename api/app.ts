@@ -16,6 +16,7 @@ import linesRoutes from './routes/lines.js'
 import votesRoutes from './routes/votes.js'
 import statsRoutes from './routes/stats.js'
 import favoritesRoutes from './routes/favorites.js'
+import feedbacksRoutes from './routes/feedbacks.js'
 
 // for esm mode
 const __filename = fileURLToPath(import.meta.url)
@@ -38,6 +39,7 @@ app.use('/api/lines', linesRoutes)
 app.use('/api/votes', votesRoutes)
 app.use('/api/stats', statsRoutes)
 app.use('/api/favorites', favoritesRoutes)
+app.use('/api/feedbacks', feedbacksRoutes)
 
 /**
  * health

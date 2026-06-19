@@ -1,5 +1,18 @@
 import { create } from 'zustand';
-import type { MetroLine, VoteLevel, TimeSlot, LineStats, TrendData, FavoriteLine, TemperatureAnomaly, VoteHistoryRecord, TrendCompareMode } from '../../shared/types.js';
+import type {
+  MetroLine,
+  VoteLevel,
+  TimeSlot,
+  LineStats,
+  TrendData,
+  FavoriteLine,
+  TemperatureAnomaly,
+  VoteHistoryRecord,
+  TrendCompareMode,
+  Feedback,
+  FeedbackCountMap,
+  FeedbackListResponse,
+} from '../../shared/types.js';
 
 function getOrCreateUserId(): string {
   let userId = localStorage.getItem('metro_user_id');
@@ -26,6 +39,7 @@ interface AppState {
   trendCompareMode: TrendCompareMode;
   selectedTimeSlot: TimeSlot;
   voteSuccess: boolean;
+  lastVoteLevel: VoteLevel | null;
   loading: boolean;
   error: string | null;
   userId: string;
@@ -38,6 +52,13 @@ interface AppState {
   voteHistoryLoading: boolean;
   historyFilterLineId: string;
   historyFilterTimeSlot: TimeSlot;
+  feedbackCountMap: FeedbackCountMap;
+  feedbackCountLoading: boolean;
+  feedbackModalOpen: boolean;
+  selectedFeedbackCarriage: number | null;
+  feedbackList: Feedback[];
+  feedbackListLoading: boolean;
+  feedbackListTotal: number;
 
   setLines: (lines: MetroLine[]) => void;
   setSelectedLineId: (id: string | null) => void;
@@ -52,12 +73,17 @@ interface AppState {
   setHistoryFilterLineId: (id: string) => void;
   setHistoryFilterTimeSlot: (slot: TimeSlot) => void;
   submitVote: (level: VoteLevel) => Promise<boolean>;
+  submitFeedback: (content: string) => Promise<boolean>;
   fetchLines: () => Promise<void>;
   fetchStats: () => Promise<void>;
   fetchTrend: () => Promise<void>;
   fetchFavorites: () => Promise<void>;
   fetchAnomalies: () => Promise<void>;
   fetchVoteHistory: () => Promise<void>;
+  fetchFeedbackCounts: () => Promise<void>;
+  fetchFeedbackList: (carriageNumber: number) => Promise<void>;
+  openFeedbackModal: (carriageNumber: number) => void;
+  closeFeedbackModal: () => void;
   dismissAnomaly: (anomalyId: string) => void;
   toggleFavorite: (lineId: string) => Promise<boolean>;
   addFavorite: (lineId: string) => Promise<boolean>;
@@ -75,6 +101,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   trendCompareMode: 'none',
   selectedTimeSlot: 'all',
   voteSuccess: false,
+  lastVoteLevel: null,
   loading: false,
   error: null,
   userId: getOrCreateUserId(),
@@ -87,6 +114,13 @@ export const useAppStore = create<AppState>((set, get) => ({
   voteHistoryLoading: false,
   historyFilterLineId: 'all',
   historyFilterTimeSlot: 'all',
+  feedbackCountMap: {},
+  feedbackCountLoading: false,
+  feedbackModalOpen: false,
+  selectedFeedbackCarriage: null,
+  feedbackList: [],
+  feedbackListLoading: false,
+  feedbackListTotal: 0,
 
   setLines: (lines) => set({ lines }),
   setSelectedLineId: (id) => {
@@ -133,7 +167,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       });
       const data = await res.json();
       if (data.success) {
-        set({ voteSuccess: true, loading: false });
+        set({ voteSuccess: true, lastVoteLevel: level, loading: false });
         if (get().voteHistory.length > 0) {
           get().fetchVoteHistory();
         }
@@ -144,6 +178,45 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
     } catch {
       set({ error: '网络错误', loading: false });
+      return false;
+    }
+  },
+
+  submitFeedback: async (content) => {
+    const { selectedLineId, selectedCarriage, lastVoteLevel, userId } = get();
+    if (!selectedLineId || !selectedCarriage || !lastVoteLevel) {
+      set({ error: '缺少投票信息，请先投票' });
+      return false;
+    }
+    if (!content || content.trim().length === 0 || content.length > 50) {
+      set({ error: '留言内容必须在1-50字之间' });
+      return false;
+    }
+
+    try {
+      const res = await fetch('/api/feedbacks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': userId,
+        },
+        body: JSON.stringify({
+          lineId: selectedLineId,
+          carriageNumber: selectedCarriage,
+          content: content.trim(),
+          level: lastVoteLevel,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        get().fetchFeedbackCounts();
+        return true;
+      } else {
+        set({ error: data.error || '留言提交失败' });
+        return false;
+      }
+    } catch {
+      set({ error: '网络错误' });
       return false;
     }
   },
@@ -320,5 +393,65 @@ export const useAppStore = create<AppState>((set, get) => ({
     } catch {
       set({ voteHistoryLoading: false });
     }
+  },
+
+  fetchFeedbackCounts: async () => {
+    const { selectedLineId } = get();
+    if (!selectedLineId) return;
+
+    set({ feedbackCountLoading: true });
+    try {
+      const res = await fetch(`/api/feedbacks/counts/${selectedLineId}`);
+      const data = await res.json();
+      if (data.success) {
+        set({ feedbackCountMap: data.data, feedbackCountLoading: false });
+      } else {
+        set({ feedbackCountLoading: false });
+      }
+    } catch {
+      set({ feedbackCountLoading: false });
+    }
+  },
+
+  fetchFeedbackList: async (carriageNumber: number) => {
+    const { selectedLineId } = get();
+    if (!selectedLineId) return;
+
+    set({ feedbackListLoading: true });
+    try {
+      const res = await fetch(`/api/feedbacks/${selectedLineId}/${carriageNumber}`);
+      const data = await res.json();
+      if (data.success) {
+        const resp = data.data as FeedbackListResponse;
+        set({
+          feedbackList: resp.feedbacks,
+          feedbackListTotal: resp.total,
+          feedbackListLoading: false,
+        });
+      } else {
+        set({ feedbackListLoading: false });
+      }
+    } catch {
+      set({ feedbackListLoading: false });
+    }
+  },
+
+  openFeedbackModal: (carriageNumber: number) => {
+    set({
+      feedbackModalOpen: true,
+      selectedFeedbackCarriage: carriageNumber,
+      feedbackList: [],
+      feedbackListTotal: 0,
+    });
+    get().fetchFeedbackList(carriageNumber);
+  },
+
+  closeFeedbackModal: () => {
+    set({
+      feedbackModalOpen: false,
+      selectedFeedbackCarriage: null,
+      feedbackList: [],
+      feedbackListTotal: 0,
+    });
   },
 }));

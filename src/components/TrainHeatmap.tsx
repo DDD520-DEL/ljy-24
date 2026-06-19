@@ -1,9 +1,15 @@
 import { useAppStore } from '@/store/appStore';
 import { getHeatColorClass, getHeatLabel, getHeatBgColor } from '@/utils/heatmap';
-import { Snowflake, Flame, Users } from 'lucide-react';
+import { Snowflake, Flame, Users, MessageSquare } from 'lucide-react';
 
 export default function TrainHeatmap() {
-  const { currentLineStats, lines, selectedLineId } = useAppStore();
+  const {
+    currentLineStats,
+    lines,
+    selectedLineId,
+    feedbackCountMap,
+    openFeedbackModal,
+  } = useAppStore();
   const line = lines.find((l) => l.id === selectedLineId);
 
   if (!line || !currentLineStats) {
@@ -21,7 +27,7 @@ export default function TrainHeatmap() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3">
           <span
             className="w-4 h-4 rounded-full"
@@ -46,7 +52,7 @@ export default function TrainHeatmap() {
           </div>
         </div>
 
-        <div className="h-2 rounded-full overflow-hidden bg-metro-border flex mb-6">
+        <div className="h-2 rounded-full overflow-hidden bg-metro-border flex mb-4">
           <div className="flex-1 heat-cold" />
           <div className="flex-1 heat-cool" />
           <div className="flex-1 heat-comfort" />
@@ -54,48 +60,73 @@ export default function TrainHeatmap() {
           <div className="flex-1 heat-hot" />
         </div>
 
+        <div className="flex items-center gap-2 mb-4 text-xs text-slate-400">
+          <MessageSquare className="w-3.5 h-3.5" />
+          <span>点击车厢格子查看乘客留言</span>
+        </div>
+
         <div className="overflow-x-auto hide-scrollbar">
           <div
             className="flex gap-2 min-w-max pb-2"
             style={{ opacity: 0, animation: 'fadeIn 0.5s ease-out forwards' }}
           >
-            {currentLineStats.carriages.map((carriage, idx) => (
-              <div
-                key={carriage.carriageNumber}
-                style={{ animationDelay: `${idx * 80}ms` }}
-                className="animate-slide-up"
-              >
+            {currentLineStats.carriages.map((carriage, idx) => {
+              const feedbackCount = feedbackCountMap[carriage.carriageNumber] || 0;
+              return (
                 <div
-                  className={`relative w-20 sm:w-24 h-28 sm:h-32 rounded-xl ${getHeatColorClass(carriage.temperatureScore)} shadow-lg overflow-hidden group transition-all duration-300 hover:scale-105 hover:shadow-xl`}
+                  key={carriage.carriageNumber}
+                  style={{ animationDelay: `${idx * 80}ms` }}
+                  className="animate-slide-up"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
-                  <div className="relative z-10 h-full flex flex-col items-center justify-between p-2 text-white">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-black/30 backdrop-blur-sm">
-                      <span className="font-bold font-display text-lg">{carriage.carriageNumber}</span>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-[11px] opacity-90 font-medium">{getHeatLabel(carriage.temperatureScore)}</div>
-                      <div className="text-[10px] opacity-70">{carriage.totalCount}票</div>
-                    </div>
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-black/20 backdrop-blur-sm">
-                    <div
-                      className="h-full"
-                      style={{
-                        width: `${carriage.totalCount > 0 ? (carriage.hotCount / carriage.totalCount) * 100 : 0}%`,
-                        backgroundColor: getHeatBgColor(carriage.temperatureScore),
-                        opacity: 0.6,
-                      }}
-                    />
-                  </div>
-                </div>
+                  <button
+                    onClick={() => openFeedbackModal(carriage.carriageNumber)}
+                    className={`relative w-20 sm:w-24 h-28 sm:h-32 rounded-xl ${getHeatColorClass(carriage.temperatureScore)} shadow-lg overflow-hidden group transition-all duration-300 hover:scale-105 hover:shadow-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-metro-blue/50`}
+                  >
+                    {feedbackCount > 0 && (
+                      <div className="absolute -top-1 -right-1 z-20 min-w-[22px] h-5 px-1.5 rounded-full bg-gradient-to-r from-metro-blue to-metro-lightBlue text-white text-[11px] font-bold flex items-center justify-center shadow-lg shadow-metro-blue/40 animate-bounce-soft">
+                        {feedbackCount > 99 ? '99+' : feedbackCount}
+                      </div>
+                    )}
 
-                <div className="mt-2 flex justify-around px-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-metro-border" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-metro-border" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
+
+                    <div className="relative z-10 h-full flex flex-col items-center justify-between p-2 text-white">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-black/30 backdrop-blur-sm">
+                        <span className="font-bold font-display text-lg">{carriage.carriageNumber}</span>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-[11px] opacity-90 font-medium">{getHeatLabel(carriage.temperatureScore)}</div>
+                        <div className="text-[10px] opacity-70">{carriage.totalCount}票</div>
+                        {feedbackCount > 0 && (
+                          <div className="flex items-center justify-center gap-1 mt-1 text-[9px] opacity-80">
+                            <MessageSquare className="w-2.5 h-2.5" />
+                            <span>{feedbackCount}条留言</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-black/20 backdrop-blur-sm">
+                      <div
+                        className="h-full"
+                        style={{
+                          width: `${carriage.totalCount > 0 ? (carriage.hotCount / carriage.totalCount) * 100 : 0}%`,
+                          backgroundColor: getHeatBgColor(carriage.temperatureScore),
+                          opacity: 0.6,
+                        }}
+                      />
+                    </div>
+
+                    <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors pointer-events-none" />
+                  </button>
+
+                  <div className="mt-2 flex justify-around px-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-metro-border" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-metro-border" />
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
