@@ -34,14 +34,13 @@ export default function ShareGuideBar() {
   const [copied, setCopied] = useState(false);
 
   if (!shareGuideVisible) return null;
+  if (!selectedLineId || selectedCarriage == null || !lastVoteLevel) return null;
 
   const selectedLine = lines.find((l) => l.id === selectedLineId);
   const lineName = selectedLine?.name || '地铁';
-  const levelInfo = lastVoteLevel ? LEVEL_TEXT[lastVoteLevel] : null;
+  const levelInfo = LEVEL_TEXT[lastVoteLevel];
 
-  const shareText = levelInfo
-    ? `【${levelInfo.tag}】我刚刚在${lineName}${selectedCarriage}号车厢投票：${levelInfo.emoji}${levelInfo.desc}！来「地铁温度吐槽站」看看哪节车厢最舒适，避开冻僵/闷热车厢 →`
-    : `我刚刚在${lineName}${selectedCarriage}号车厢完成了温度投票！来「地铁温度吐槽站」一起投票，看看哪节车厢最舒适 →`;
+  const shareText = `【${levelInfo.tag}】我刚刚在${lineName}${selectedCarriage}号车厢投票：${levelInfo.emoji}${levelInfo.desc}！来「地铁温度吐槽站」看看哪节车厢最舒适，避开冻僵/闷热车厢 →`;
 
   const handleCopy = async () => {
     try {

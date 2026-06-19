@@ -33,12 +33,22 @@ export default function VoteSuccessModal() {
 
   const levelMeta = lastVoteLevel ? LEVEL_META[lastVoteLevel] : null;
 
-  const handleClose = () => {
-    setVoteSuccess(false);
-    setShareGuideVisible(true);
+  const resetFeedbackState = () => {
     setFeedback('');
     setFeedbackSubmitted(false);
     setIsSubmittingFeedback(false);
+  };
+
+  const handleClose = () => {
+    setVoteSuccess(false);
+    setShareGuideVisible(true);
+    resetFeedbackState();
+  };
+
+  const handleCloseWithoutShare = () => {
+    setVoteSuccess(false);
+    setShareGuideVisible(false);
+    resetFeedbackState();
   };
 
   const handleSubmitFeedback = async () => {
@@ -134,7 +144,7 @@ export default function VoteSuccessModal() {
             </button>
             <Link
               to="/heatmap"
-              onClick={handleClose}
+              onClick={handleCloseWithoutShare}
               className="flex-1 px-5 py-3 rounded-xl bg-gradient-to-r from-metro-blue to-metro-lightBlue text-white font-medium flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-metro-blue/30 transition-all"
             >
               <BarChart3 className="w-4 h-4" />

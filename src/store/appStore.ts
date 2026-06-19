@@ -188,9 +188,9 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setLines: (lines) => set({ lines }),
   setSelectedLineId: (id) => {
-    set({ selectedLineId: id, selectedCarriage: null, selectedStationSectionId: null, currentLineStats: null });
+    set({ selectedLineId: id, selectedCarriage: null, selectedStationSectionId: null, currentLineStats: null, shareGuideVisible: false });
   },
-  setSelectedCarriage: (num) => set({ selectedCarriage: num }),
+  setSelectedCarriage: (num) => set({ selectedCarriage: num, shareGuideVisible: false }),
   setSelectedStationSectionId: (id) => set({ selectedStationSectionId: id }),
   setCurrentLineStats: (stats) => set({ currentLineStats: stats }),
   setCurrentTrend: (trend) => set({ currentTrend: trend }),

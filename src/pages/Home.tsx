@@ -13,7 +13,7 @@ import { Link } from 'react-router-dom';
 import { BarChart3, Info } from 'lucide-react';
 
 export default function Home() {
-  const { fetchLines, fetchFavorites, lines, error, selectedLineId, selectedCarriage } = useAppStore();
+  const { fetchLines, fetchFavorites, lines, error, selectedLineId, selectedCarriage, setShareGuideVisible } = useAppStore();
 
   useEffect(() => {
     if (lines.length === 0) {
@@ -21,6 +21,10 @@ export default function Home() {
     }
     fetchFavorites();
   }, [fetchLines, fetchFavorites, lines.length]);
+
+  useEffect(() => {
+    setShareGuideVisible(false);
+  }, [setShareGuideVisible]);
 
   return (
     <div className="min-h-screen flex flex-col">
