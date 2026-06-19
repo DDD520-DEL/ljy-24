@@ -16,6 +16,17 @@ export interface Vote {
   level: VoteLevel;
   timestamp: number;
   timeSlot: TimeSlot;
+  userId?: string;
+  snapshotScore?: number;
+  snapshotColdCount?: number;
+  snapshotComfortableCount?: number;
+  snapshotHotCount?: number;
+  snapshotTotalCount?: number;
+}
+
+export interface VoteHistoryRecord extends Vote {
+  lineName: string;
+  lineColor: string;
 }
 
 export interface CarriageStats {

@@ -134,12 +134,74 @@ function injectAnomalyTestData(votes: Vote[], now: number): void {
   }
 }
 
+function generateMockUserVotes(baseVotes: Vote[], lines: MetroLine[]): Vote[] {
+  const mockUserId = 'user_mock_history';
+  const userVotes: Vote[] = [];
+  const now = Date.now();
+
+  const voteTimes = [
+    { daysAgo: 7, hour: 8, minute: 30 },
+    { daysAgo: 6, hour: 18, minute: 15 },
+    { daysAgo: 5, hour: 8, minute: 45 },
+    { daysAgo: 4, hour: 12, minute: 20 },
+    { daysAgo: 3, hour: 19, minute: 5 },
+    { daysAgo: 2, hour: 7, minute: 55 },
+    { daysAgo: 1, hour: 18, minute: 30 },
+    { daysAgo: 0, hour: 9, minute: 10 },
+    { daysAgo: 0, hour: 18, minute: 45 },
+    { daysAgo: 0, hour: 14, minute: 20 },
+  ];
+
+  voteTimes.forEach((vt, idx) => {
+    const line = lines[idx % lines.length];
+    const carriage = 1 + (idx % line.carriageCount);
+    const date = new Date(now);
+    date.setDate(date.getDate() - vt.daysAgo);
+    date.setHours(vt.hour, vt.minute, 0, 0);
+    const timestamp = date.getTime();
+    const timeSlot = getTimeSlotFromHour(vt.hour);
+
+    const levels: VoteLevel[] = ['cold', 'comfortable', 'hot'];
+    const level = levels[idx % 3];
+
+    const relevantVotes = baseVotes.filter(
+      (v) => v.lineId === line.id && v.carriageNumber === carriage && v.timestamp <= timestamp
+    );
+    const coldCount = relevantVotes.filter((v) => v.level === 'cold').length;
+    const comfortableCount = relevantVotes.filter((v) => v.level === 'comfortable').length;
+    const hotCount = relevantVotes.filter((v) => v.level === 'hot').length;
+    const totalCount = coldCount + comfortableCount + hotCount;
+    const snapshotScore = totalCount > 0
+      ? Math.round(((hotCount - coldCount) / totalCount) * 100)
+      : 0;
+
+    userVotes.push({
+      id: generateId(),
+      lineId: line.id,
+      carriageNumber: carriage,
+      level,
+      timestamp,
+      timeSlot,
+      userId: mockUserId,
+      snapshotScore,
+      snapshotColdCount: coldCount,
+      snapshotComfortableCount: comfortableCount,
+      snapshotHotCount: hotCount,
+      snapshotTotalCount: totalCount,
+    });
+  });
+
+  return userVotes;
+}
+
 class DataStore {
   private votes: Vote[] = [];
   private favorites: Map<string, FavoriteLine[]> = new Map();
 
   constructor() {
-    this.votes = generateMockVotes();
+    const baseVotes = generateMockVotes();
+    const userVotes = generateMockUserVotes(baseVotes, LINES);
+    this.votes = [...baseVotes, ...userVotes];
   }
 
   getLines(): MetroLine[] {
@@ -162,10 +224,21 @@ class DataStore {
     });
   }
 
-  addVote(lineId: string, carriageNumber: number, level: VoteLevel): Vote {
+  addVote(lineId: string, carriageNumber: number, level: VoteLevel, userId?: string): Vote {
     const now = Date.now();
     const hour = new Date(now).getHours();
     const timeSlot = getTimeSlotFromHour(hour);
+
+    const priorVotes = this.votes.filter(
+      (v) => v.lineId === lineId && v.carriageNumber === carriageNumber && v.timestamp <= now
+    );
+    const snapshotColdCount = priorVotes.filter((v) => v.level === 'cold').length;
+    const snapshotComfortableCount = priorVotes.filter((v) => v.level === 'comfortable').length;
+    const snapshotHotCount = priorVotes.filter((v) => v.level === 'hot').length;
+    const snapshotTotalCount = snapshotColdCount + snapshotComfortableCount + snapshotHotCount;
+    const snapshotScore = snapshotTotalCount > 0
+      ? Math.round(((snapshotHotCount - snapshotColdCount) / snapshotTotalCount) * 100)
+      : 0;
 
     const vote: Vote = {
       id: generateId(),
@@ -174,10 +247,27 @@ class DataStore {
       level,
       timestamp: now,
       timeSlot,
+      userId,
+      snapshotScore,
+      snapshotColdCount,
+      snapshotComfortableCount,
+      snapshotHotCount,
+      snapshotTotalCount,
     };
 
     this.votes.push(vote);
     return vote;
+  }
+
+  getUserVotes(userId: string, lineId?: string, timeSlot?: TimeSlot): Vote[] {
+    return this.votes
+      .filter((v) => {
+        if (v.userId !== userId) return false;
+        if (lineId && lineId !== 'all' && v.lineId !== lineId) return false;
+        if (timeSlot && timeSlot !== 'all' && v.timeSlot !== timeSlot) return false;
+        return true;
+      })
+      .sort((a, b) => b.timestamp - a.timestamp);
   }
 
   getFavorites(userId: string): FavoriteLine[] {

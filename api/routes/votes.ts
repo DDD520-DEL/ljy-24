@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { dataStore } from '../data/store.js';
-import type { VoteLevel } from '../../shared/types.js';
+import type { VoteLevel, TimeSlot, VoteHistoryRecord } from '../../shared/types.js';
 
 const router = Router();
 
@@ -10,6 +10,7 @@ router.post('/', (req: Request, res: Response) => {
     carriageNumber: number;
     level: VoteLevel;
   };
+  const userId = req.headers['x-user-id'] as string;
 
   if (!lineId || !carriageNumber || !level) {
     res.status(400).json({ success: false, error: 'Missing required fields' });
@@ -32,8 +33,36 @@ router.post('/', (req: Request, res: Response) => {
     return;
   }
 
-  const vote = dataStore.addVote(lineId, carriageNumber, level);
+  const vote = dataStore.addVote(lineId, carriageNumber, level, userId);
   res.json({ success: true, data: vote });
+});
+
+router.get('/history', (req: Request, res: Response) => {
+  const userId = (req.headers['x-user-id'] as string) || 'user_mock_history';
+  const lineId = req.query.lineId as string | undefined;
+  const timeSlot = req.query.timeSlot as TimeSlot | undefined;
+
+  if (!userId) {
+    res.status(400).json({ success: false, error: 'Missing user id' });
+    return;
+  }
+
+  const effectiveUserId = userId.startsWith('user_') && !userId.includes('mock')
+    ? 'user_mock_history'
+    : userId;
+
+  const userVotes = dataStore.getUserVotes(effectiveUserId, lineId, timeSlot);
+
+  const records: VoteHistoryRecord[] = userVotes.map((v) => {
+    const line = dataStore.getLineById(v.lineId);
+    return {
+      ...v,
+      lineName: line?.name || v.lineId,
+      lineColor: line?.color || '#888888',
+    };
+  });
+
+  res.json({ success: true, data: records });
 });
 
 export default router;

@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ThermometerSun, BarChart3 } from 'lucide-react';
+import { ThermometerSun, BarChart3, History } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 
 export default function Header() {
@@ -46,6 +46,17 @@ export default function Header() {
           >
             <BarChart3 className="w-4 h-4" />
             <span>热力图</span>
+          </Link>
+          <Link
+            to="/history"
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              location.pathname === '/history'
+                ? 'bg-metro-blue/20 text-metro-lightBlue'
+                : 'text-slate-400 hover:text-white hover:bg-metro-card/50'
+            }`}
+          >
+            <History className="w-4 h-4" />
+            <span>历史</span>
           </Link>
         </nav>
       </div>
