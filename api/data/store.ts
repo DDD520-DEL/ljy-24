@@ -1,12 +1,94 @@
-import type { MetroLine, Vote, VoteLevel, TimeSlot, FavoriteLine, Feedback, FeedbackCountMap } from '../../shared/types.js';
+import type { MetroLine, Vote, VoteLevel, TimeSlot, FavoriteLine, Feedback, FeedbackCountMap, MetroStation, StationSection } from '../../shared/types.js';
+
+function generateStations(lineId: string, names: string[]): MetroStation[] {
+  return names.map((name, index) => ({
+    id: `${lineId}_stn_${index}`,
+    name,
+    index,
+  }));
+}
+
+function generateSections(lineId: string, stations: MetroStation[]): StationSection[] {
+  const total = stations.length;
+  const third = Math.ceil(total / 3);
+  return [
+    {
+      id: `${lineId}_sec_start`,
+      name: '前段站点',
+      stationIndices: stations.slice(0, third).map((s) => s.index),
+    },
+    {
+      id: `${lineId}_sec_mid`,
+      name: '中段站点',
+      stationIndices: stations.slice(third, third * 2).map((s) => s.index),
+    },
+    {
+      id: `${lineId}_sec_end`,
+      name: '末段站点',
+      stationIndices: stations.slice(third * 2).map((s) => s.index),
+    },
+  ];
+}
+
+const LINE1_STATIONS = generateStations('line1', [
+  '苹果园', '古城', '八角游乐园', '八宝山', '玉泉路',
+  '五棵松', '万寿路', '公主坟', '军事博物馆', '木樨地',
+  '南礼士路', '复兴门', '西单', '天安门西', '天安门东',
+  '王府井', '东单', '建国门', '永安里', '国贸',
+  '大望路', '四惠', '四惠东',
+]);
+
+const LINE2_STATIONS = generateStations('line2', [
+  '西直门', '车公庄', '阜成门', '复兴门', '长椿街',
+  '宣武门', '和平门', '前门', '崇文门', '北京站',
+  '建国门', '朝阳门', '东四十条', '东直门', '雍和宫',
+  '安定门', '鼓楼大街', '积水潭',
+]);
+
+const LINE5_STATIONS = generateStations('line5', [
+  '天通苑北', '天通苑', '天通苑南', '立水桥', '北苑路北',
+  '大屯路东', '惠新西街北口', '惠新西街南口', '和平西桥', '和平里北街',
+  '雍和宫', '北新桥', '张自忠路', '东四', '灯市口',
+  '东单', '崇文门', '磁器口', '天坛东门', '蒲黄榆',
+  '刘家窑', '宋家庄',
+]);
+
+const LINE10_STATIONS = generateStations('line10', [
+  '巴沟', '苏州街', '海淀黄庄', '知春里', '知春路',
+  '西土城', '牡丹园', '健德门', '北土城', '安贞门',
+  '惠新西街南口', '芍药居', '太阳宫', '三元桥', '亮马桥',
+  '农业展览馆', '团结湖', '呼家楼', '金台夕照', '国贸',
+  '双井', '劲松', '潘家园', '十里河', '分钟寺',
+  '成寿寺', '宋家庄', '石榴庄', '大红门', '角门东',
+  '角门西', '草桥', '纪家庙', '首经贸', '丰台站',
+  '泥洼', '西局', '六里桥', '莲花桥', '公主坟',
+  '西钓鱼台', '慈寿寺', '车道沟', '长春桥', '火器营',
+]);
+
+const LINE13_STATIONS = generateStations('line13', [
+  '西直门', '大钟寺', '五道口', '上地', '西二旗',
+  '龙泽', '回龙观', '霍营', '立水桥', '北苑',
+  '望京西', '芍药居', '光熙门', '柳芳', '东直门',
+]);
+
+const LINE14_STATIONS = generateStations('line14', [
+  '张郭庄', '园博园', '大瓦窑', '郭庄子', '大井',
+  '七里庄', '西局', '东管头', '丽泽商务区', '菜户营',
+  '西铁营', '景风门', '北京南站', '陶然桥', '永定门外',
+  '景泰', '蒲黄榆', '方庄', '十里河', '北工大西门',
+  '平乐园', '九龙山', '大望路', '红庙', '金台路',
+  '朝阳公园', '枣营', '东风北桥', '将台', '高家园',
+  '望京南', '阜通', '望京', '东湖渠', '来广营',
+  '善各庄',
+]);
 
 const LINES: MetroLine[] = [
-  { id: 'line1', name: '1号线', color: '#C23A30', carriageCount: 6 },
-  { id: 'line2', name: '2号线', color: '#006098', carriageCount: 6 },
-  { id: 'line5', name: '5号线', color: '#A6217E', carriageCount: 6 },
-  { id: 'line10', name: '10号线', color: '#0090A3', carriageCount: 8 },
-  { id: 'line13', name: '13号线', color: '#F3D03E', carriageCount: 6 },
-  { id: 'line14', name: '14号线', color: '#D4A455', carriageCount: 6 },
+  { id: 'line1', name: '1号线', color: '#C23A30', carriageCount: 6, stations: LINE1_STATIONS, stationSections: generateSections('line1', LINE1_STATIONS) },
+  { id: 'line2', name: '2号线', color: '#006098', carriageCount: 6, stations: LINE2_STATIONS, stationSections: generateSections('line2', LINE2_STATIONS) },
+  { id: 'line5', name: '5号线', color: '#A6217E', carriageCount: 6, stations: LINE5_STATIONS, stationSections: generateSections('line5', LINE5_STATIONS) },
+  { id: 'line10', name: '10号线', color: '#0090A3', carriageCount: 8, stations: LINE10_STATIONS, stationSections: generateSections('line10', LINE10_STATIONS) },
+  { id: 'line13', name: '13号线', color: '#F3D03E', carriageCount: 6, stations: LINE13_STATIONS, stationSections: generateSections('line13', LINE13_STATIONS) },
+  { id: 'line14', name: '14号线', color: '#D4A455', carriageCount: 6, stations: LINE14_STATIONS, stationSections: generateSections('line14', LINE14_STATIONS) },
 ];
 
 function generateId(): string {
@@ -17,6 +99,11 @@ function getTimeSlotFromHour(hour: number): TimeSlot {
   if (hour >= 7 && hour <= 9) return 'morning';
   if (hour >= 17 && hour <= 19) return 'evening';
   return 'offpeak';
+}
+
+function getRandomStationSection(line: MetroLine): string {
+  const sections = line.stationSections;
+  return sections[Math.floor(Math.random() * sections.length)].id;
 }
 
 function generateMockVotes(): Vote[] {
@@ -53,6 +140,7 @@ function generateMockVotes(): Vote[] {
           level,
           timestamp,
           timeSlot,
+          stationSectionId: getRandomStationSection(line),
         });
       }
     }
@@ -66,6 +154,7 @@ function generateMockVotes(): Vote[] {
 function injectAnomalyTestData(votes: Vote[], now: number): void {
   const targetLine = 'line1';
   const targetCarriage = 3;
+  const line1 = LINES.find((l) => l.id === targetLine)!;
 
   for (let i = 0; i < 30; i++) {
     const hourOffset = 1 + Math.floor(Math.random() * 23);
@@ -81,6 +170,7 @@ function injectAnomalyTestData(votes: Vote[], now: number): void {
       level: 'comfortable',
       timestamp,
       timeSlot,
+      stationSectionId: getRandomStationSection(line1),
     });
   }
 
@@ -98,11 +188,13 @@ function injectAnomalyTestData(votes: Vote[], now: number): void {
       level: 'cold',
       timestamp,
       timeSlot,
+      stationSectionId: getRandomStationSection(line1),
     });
   }
 
   const targetLine2 = 'line10';
   const targetCarriage2 = 5;
+  const line10 = LINES.find((l) => l.id === targetLine2)!;
 
   for (let i = 0; i < 25; i++) {
     const hourOffset = 1 + Math.floor(Math.random() * 23);
@@ -118,6 +210,7 @@ function injectAnomalyTestData(votes: Vote[], now: number): void {
       level: 'comfortable',
       timestamp,
       timeSlot,
+      stationSectionId: getRandomStationSection(line10),
     });
   }
 
@@ -135,6 +228,7 @@ function injectAnomalyTestData(votes: Vote[], now: number): void {
       level: 'hot',
       timestamp,
       timeSlot,
+      stationSectionId: getRandomStationSection(line10),
     });
   }
 }
@@ -164,6 +258,7 @@ function generateMockUserVotes(baseVotes: Vote[], lines: MetroLine[], userId: st
     date.setHours(vt.hour, vt.minute, 0, 0);
     const timestamp = date.getTime();
     const timeSlot = getTimeSlotFromHour(vt.hour);
+    const stationSectionId = getRandomStationSection(line);
 
     const levels: VoteLevel[] = ['cold', 'comfortable', 'hot'];
     const level = levels[idx % 3];
@@ -186,6 +281,7 @@ function generateMockUserVotes(baseVotes: Vote[], lines: MetroLine[], userId: st
       level,
       timestamp,
       timeSlot,
+      stationSectionId,
       userId,
       snapshotScore,
       snapshotColdCount: coldCount,
@@ -333,7 +429,7 @@ class DataStore {
     });
   }
 
-  addVote(lineId: string, carriageNumber: number, level: VoteLevel, userId?: string): Vote {
+  addVote(lineId: string, carriageNumber: number, level: VoteLevel, userId?: string, stationSectionId?: string): Vote {
     const now = Date.now();
     const hour = new Date(now).getHours();
     const timeSlot = getTimeSlotFromHour(hour);
@@ -356,6 +452,7 @@ class DataStore {
       level,
       timestamp: now,
       timeSlot,
+      stationSectionId,
       userId,
       snapshotScore,
       snapshotColdCount,
@@ -366,6 +463,25 @@ class DataStore {
 
     this.votes.push(vote);
     return vote;
+  }
+
+  getVotesByStationSection(lineId: string, sectionId: string, timeSlot?: TimeSlot): Vote[] {
+    return this.votes.filter((v) => {
+      if (v.lineId !== lineId) return false;
+      if (v.stationSectionId !== sectionId) return false;
+      if (timeSlot && timeSlot !== 'all' && v.timeSlot !== timeSlot) return false;
+      return true;
+    });
+  }
+
+  getStationSections(lineId: string): StationSection[] {
+    const line = this.getLineById(lineId);
+    return line?.stationSections || [];
+  }
+
+  getStations(lineId: string): MetroStation[] {
+    const line = this.getLineById(lineId);
+    return line?.stations || [];
   }
 
   ensureUserHistoryData(userId: string): void {

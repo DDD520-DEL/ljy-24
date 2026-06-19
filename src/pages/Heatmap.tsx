@@ -3,6 +3,7 @@ import { useAppStore } from '@/store/appStore';
 import Header from '@/components/Header';
 import LineTabs from '@/components/LineTabs';
 import TimeSlotPicker from '@/components/TimeSlotPicker';
+import StationDimensionToggle from '@/components/StationDimensionToggle';
 import TrainHeatmap from '@/components/TrainHeatmap';
 import StatsCards from '@/components/StatsCards';
 import TrendChart from '@/components/TrendChart';
@@ -18,6 +19,7 @@ export default function Heatmap() {
     lines,
     selectedLineId,
     selectedTimeSlot,
+    heatmapDimension,
   } = useAppStore();
 
   useEffect(() => {
@@ -33,7 +35,7 @@ export default function Heatmap() {
       fetchTrend();
       fetchFeedbackCounts();
     }
-  }, [selectedLineId, selectedTimeSlot, fetchStats, fetchTrend, fetchFeedbackCounts]);
+  }, [selectedLineId, selectedTimeSlot, heatmapDimension, fetchStats, fetchTrend, fetchFeedbackCounts]);
 
   return (
     <div className="min-h-screen">
@@ -43,10 +45,10 @@ export default function Heatmap() {
         <div className="max-w-5xl mx-auto">
           <div className="mb-8 animate-fade-in">
             <h1 className="font-display text-2xl sm:text-3xl font-bold text-white mb-2">
-              🔥 车厢温度热力图
+              🔥 温度热力图
             </h1>
             <p className="text-slate-400 text-sm">
-              实时查看各线路各车厢的空调温度分布，避开冻僵和闷热车厢
+              实时查看各线路不同车厢和站点的空调温度分布，避开冻僵和闷热区域
             </p>
           </div>
 
@@ -55,8 +57,9 @@ export default function Heatmap() {
               <LineTabs />
             </div>
 
-            <div className="animate-slide-up delay-200 opacity-0">
+            <div className="animate-slide-up delay-200 opacity-0 flex flex-wrap gap-6 items-start">
               <TimeSlotPicker />
+              <StationDimensionToggle />
             </div>
 
             <div className="animate-slide-up delay-300 opacity-0">

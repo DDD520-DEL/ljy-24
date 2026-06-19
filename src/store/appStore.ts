@@ -12,6 +12,7 @@ import type {
   Feedback,
   FeedbackCountMap,
   FeedbackListResponse,
+  HeatmapDimension,
 } from '../../shared/types.js';
 
 function getOrCreateUserId(): string {
@@ -33,11 +34,13 @@ interface AppState {
   lines: MetroLine[];
   selectedLineId: string | null;
   selectedCarriage: number | null;
+  selectedStationSectionId: string | null;
   currentLineStats: LineStats | null;
   currentTrend: TrendData[];
   trendComparison: TrendComparisonData;
   trendCompareMode: TrendCompareMode;
   selectedTimeSlot: TimeSlot;
+  heatmapDimension: HeatmapDimension;
   voteSuccess: boolean;
   lastVoteLevel: VoteLevel | null;
   loading: boolean;
@@ -63,10 +66,12 @@ interface AppState {
   setLines: (lines: MetroLine[]) => void;
   setSelectedLineId: (id: string | null) => void;
   setSelectedCarriage: (num: number | null) => void;
+  setSelectedStationSectionId: (id: string | null) => void;
   setCurrentLineStats: (stats: LineStats | null) => void;
   setCurrentTrend: (trend: TrendData[]) => void;
   setTrendCompareMode: (mode: TrendCompareMode) => void;
   setSelectedTimeSlot: (slot: TimeSlot) => void;
+  setHeatmapDimension: (dim: HeatmapDimension) => void;
   setVoteSuccess: (val: boolean) => void;
   setLoading: (val: boolean) => void;
   setError: (err: string | null) => void;
@@ -95,11 +100,13 @@ export const useAppStore = create<AppState>((set, get) => ({
   lines: [],
   selectedLineId: null,
   selectedCarriage: null,
+  selectedStationSectionId: null,
   currentLineStats: null,
   currentTrend: [],
   trendComparison: { current: [] },
   trendCompareMode: 'none',
   selectedTimeSlot: 'all',
+  heatmapDimension: 'carriage',
   voteSuccess: false,
   lastVoteLevel: null,
   loading: false,
@@ -124,9 +131,10 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setLines: (lines) => set({ lines }),
   setSelectedLineId: (id) => {
-    set({ selectedLineId: id, selectedCarriage: null, currentLineStats: null });
+    set({ selectedLineId: id, selectedCarriage: null, selectedStationSectionId: null, currentLineStats: null });
   },
   setSelectedCarriage: (num) => set({ selectedCarriage: num }),
+  setSelectedStationSectionId: (id) => set({ selectedStationSectionId: id }),
   setCurrentLineStats: (stats) => set({ currentLineStats: stats }),
   setCurrentTrend: (trend) => set({ currentTrend: trend }),
   setTrendCompareMode: (mode) => {
@@ -134,6 +142,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     get().fetchTrend();
   },
   setSelectedTimeSlot: (slot) => set({ selectedTimeSlot: slot }),
+  setHeatmapDimension: (dim) => set({ heatmapDimension: dim }),
   setVoteSuccess: (val) => set({ voteSuccess: val }),
   setLoading: (val) => set({ loading: val }),
   setError: (err) => set({ error: err }),
@@ -145,7 +154,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   submitVote: async (level) => {
-    const { selectedLineId, selectedCarriage, userId } = get();
+    const { selectedLineId, selectedCarriage, selectedStationSectionId, userId } = get();
     if (!selectedLineId || !selectedCarriage) {
       set({ error: '请先选择线路和车厢' });
       return false;
@@ -153,17 +162,22 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     set({ loading: true, error: null });
     try {
+      const body: Record<string, string | number> = {
+        lineId: selectedLineId,
+        carriageNumber: selectedCarriage,
+        level,
+      };
+      if (selectedStationSectionId) {
+        body.stationSectionId = selectedStationSectionId;
+      }
+
       const res = await fetch('/api/votes', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-user-id': userId,
         },
-        body: JSON.stringify({
-          lineId: selectedLineId,
-          carriageNumber: selectedCarriage,
-          level,
-        }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (data.success) {

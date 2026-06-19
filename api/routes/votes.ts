@@ -5,11 +5,12 @@ import type { VoteLevel, TimeSlot, VoteHistoryRecord } from '../../shared/types.
 const router = Router();
 
 router.post('/', (req: Request, res: Response) => {
-  const { lineId, carriageNumber, level, feedback } = req.body as {
+  const { lineId, carriageNumber, level, feedback, stationSectionId } = req.body as {
     lineId: string;
     carriageNumber: number;
     level: VoteLevel;
     feedback?: string;
+    stationSectionId?: string;
   };
   const userId = req.headers['x-user-id'] as string;
 
@@ -39,7 +40,15 @@ router.post('/', (req: Request, res: Response) => {
     return;
   }
 
-  const vote = dataStore.addVote(lineId, carriageNumber, level, userId);
+  if (stationSectionId) {
+    const validSection = line.stationSections.some((s) => s.id === stationSectionId);
+    if (!validSection) {
+      res.status(400).json({ success: false, error: 'Invalid station section' });
+      return;
+    }
+  }
+
+  const vote = dataStore.addVote(lineId, carriageNumber, level, userId, stationSectionId);
 
   let feedbackData = null;
   if (feedback && feedback.trim().length > 0) {

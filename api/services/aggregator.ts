@@ -1,4 +1,4 @@
-import type { Vote, CarriageStats, LineStats, TrendData, TimeSlot } from '../../shared/types.js';
+import type { Vote, CarriageStats, LineStats, TrendData, TimeSlot, StationSectionStats, StationSection } from '../../shared/types.js';
 import { dataStore } from '../data/store.js';
 
 function calculateTemperatureScore(cold: number, comfortable: number, hot: number): number {
@@ -33,29 +33,74 @@ export function aggregateCarriageStats(
   return stats;
 }
 
+export function aggregateStationSectionStats(
+  votes: Vote[],
+  sections: StationSection[],
+): StationSectionStats[] {
+  const stats: StationSectionStats[] = [];
+
+  for (const section of sections) {
+    const sectionVotes = votes.filter((v) => v.stationSectionId === section.id);
+    const coldCount = sectionVotes.filter((v) => v.level === 'cold').length;
+    const comfortableCount = sectionVotes.filter((v) => v.level === 'comfortable').length;
+    const hotCount = sectionVotes.filter((v) => v.level === 'hot').length;
+    const totalCount = sectionVotes.length;
+
+    stats.push({
+      sectionId: section.id,
+      sectionName: section.name,
+      coldCount,
+      comfortableCount,
+      hotCount,
+      totalCount,
+      temperatureScore: calculateTemperatureScore(coldCount, comfortableCount, hotCount),
+    });
+  }
+
+  return stats;
+}
+
 export function aggregateLineStats(lineId: string, timeSlot: TimeSlot): LineStats | null {
   const line = dataStore.getLineById(lineId);
   if (!line) return null;
 
   const votes = dataStore.getVotesByLine(lineId, timeSlot);
   const carriages = aggregateCarriageStats(votes, line.carriageCount);
+  const stationSections = aggregateStationSectionStats(votes, line.stationSections);
 
   const totalVotes = votes.length;
 
   let coldestCarriage = 1;
   let hottestCarriage = 1;
-  let minScore = Infinity;
-  let maxScore = -Infinity;
+  let minCarriageScore = Infinity;
+  let maxCarriageScore = -Infinity;
 
   for (const c of carriages) {
     if (c.totalCount === 0) continue;
-    if (c.temperatureScore < minScore) {
-      minScore = c.temperatureScore;
+    if (c.temperatureScore < minCarriageScore) {
+      minCarriageScore = c.temperatureScore;
       coldestCarriage = c.carriageNumber;
     }
-    if (c.temperatureScore > maxScore) {
-      maxScore = c.temperatureScore;
+    if (c.temperatureScore > maxCarriageScore) {
+      maxCarriageScore = c.temperatureScore;
       hottestCarriage = c.carriageNumber;
+    }
+  }
+
+  let coldestSection = '';
+  let hottestSection = '';
+  let minSectionScore = Infinity;
+  let maxSectionScore = -Infinity;
+
+  for (const s of stationSections) {
+    if (s.totalCount === 0) continue;
+    if (s.temperatureScore < minSectionScore) {
+      minSectionScore = s.temperatureScore;
+      coldestSection = s.sectionId;
+    }
+    if (s.temperatureScore > maxSectionScore) {
+      maxSectionScore = s.temperatureScore;
+      hottestSection = s.sectionId;
     }
   }
 
@@ -66,9 +111,12 @@ export function aggregateLineStats(lineId: string, timeSlot: TimeSlot): LineStat
     lineId,
     timeSlot,
     carriages,
+    stationSections,
     totalVotes,
     coldestCarriage,
     hottestCarriage,
+    coldestSection,
+    hottestSection,
     comfortRate,
   };
 }

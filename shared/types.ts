@@ -2,11 +2,27 @@ export type VoteLevel = 'cold' | 'comfortable' | 'hot';
 
 export type TimeSlot = 'morning' | 'evening' | 'offpeak' | 'all';
 
+export type HeatmapDimension = 'carriage' | 'station';
+
+export interface MetroStation {
+  id: string;
+  name: string;
+  index: number;
+}
+
+export interface StationSection {
+  id: string;
+  name: string;
+  stationIndices: number[];
+}
+
 export interface MetroLine {
   id: string;
   name: string;
   color: string;
   carriageCount: number;
+  stations: MetroStation[];
+  stationSections: StationSection[];
 }
 
 export interface Vote {
@@ -16,6 +32,7 @@ export interface Vote {
   level: VoteLevel;
   timestamp: number;
   timeSlot: TimeSlot;
+  stationSectionId?: string;
   userId?: string;
   snapshotScore?: number;
   snapshotColdCount?: number;
@@ -38,13 +55,26 @@ export interface CarriageStats {
   temperatureScore: number;
 }
 
+export interface StationSectionStats {
+  sectionId: string;
+  sectionName: string;
+  coldCount: number;
+  comfortableCount: number;
+  hotCount: number;
+  totalCount: number;
+  temperatureScore: number;
+}
+
 export interface LineStats {
   lineId: string;
   timeSlot: TimeSlot;
   carriages: CarriageStats[];
+  stationSections: StationSectionStats[];
   totalVotes: number;
   coldestCarriage: number;
   hottestCarriage: number;
+  coldestSection: string;
+  hottestSection: string;
   comfortRate: number;
 }
 

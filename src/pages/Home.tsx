@@ -3,6 +3,7 @@ import { useAppStore } from '@/store/appStore';
 import Header from '@/components/Header';
 import LineSelector from '@/components/LineSelector';
 import CarriagePicker from '@/components/CarriagePicker';
+import StationPicker from '@/components/StationPicker';
 import VoteButtons from '@/components/VoteButtons';
 import VoteSuccessModal from '@/components/VoteSuccessModal';
 import { Link } from 'react-router-dom';
@@ -50,14 +51,19 @@ export default function Home() {
             </div>
 
             <div className="animate-slide-up delay-300 opacity-0">
+              <StationPicker />
+            </div>
+
+            <div className="animate-slide-up delay-400 opacity-0">
               <VoteButtons />
             </div>
 
             {!selectedLineId || !selectedCarriage ? (
-              <div className="animate-slide-up delay-400 opacity-0 flex items-start gap-3 p-4 bg-metro-card/50 border border-metro-border rounded-xl">
+              <div className="animate-slide-up delay-500 opacity-0 flex items-start gap-3 p-4 bg-metro-card/50 border border-metro-border rounded-xl">
                 <Info className="w-5 h-5 text-metro-lightBlue flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-slate-400">
                   请先选择你当前乘坐的地铁线路和车厢编号，然后点击最符合你体感的按钮进行投票。
+                  站点区间为选填项，填写后可以帮助我们统计不同站点的温度差异。
                   所有数据匿名提交，感谢你为通勤族做的贡献！
                 </p>
               </div>

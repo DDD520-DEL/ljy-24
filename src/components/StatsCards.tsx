@@ -2,9 +2,31 @@ import { useAppStore } from '@/store/appStore';
 import { Snowflake, Flame, ThumbsUp, Vote } from 'lucide-react';
 
 export default function StatsCards() {
-  const { currentLineStats } = useAppStore();
+  const { currentLineStats, heatmapDimension } = useAppStore();
 
   if (!currentLineStats) return null;
+
+  const isCarriageView = heatmapDimension === 'carriage';
+
+  const getColdestLabel = () => {
+    if (isCarriageView) {
+      return `${currentLineStats.coldestCarriage}号车厢`;
+    }
+    const section = currentLineStats.stationSections.find(
+      (s) => s.sectionId === currentLineStats.coldestSection,
+    );
+    return section?.sectionName || '-';
+  };
+
+  const getHottestLabel = () => {
+    if (isCarriageView) {
+      return `${currentLineStats.hottestCarriage}号车厢`;
+    }
+    const section = currentLineStats.stationSections.find(
+      (s) => s.sectionId === currentLineStats.hottestSection,
+    );
+    return section?.sectionName || '-';
+  };
 
   const stats = [
     {
@@ -15,15 +37,15 @@ export default function StatsCards() {
       iconColor: 'text-metro-lightBlue',
     },
     {
-      label: '最冷车厢',
-      value: `${currentLineStats.coldestCarriage}号`,
+      label: isCarriageView ? '最冷车厢' : '最冷站点段',
+      value: getColdestLabel(),
       icon: Snowflake,
       color: 'from-blue-600 to-cyan-400',
       iconColor: 'text-cyan-400',
     },
     {
-      label: '最闷车厢',
-      value: `${currentLineStats.hottestCarriage}号`,
+      label: isCarriageView ? '最闷车厢' : '最闷站点段',
+      value: getHottestLabel(),
       icon: Flame,
       color: 'from-orange-600 to-amber-400',
       iconColor: 'text-orange-400',
@@ -53,7 +75,7 @@ export default function StatsCards() {
                 <Icon className="w-5 h-5" />
               </div>
               <div className="text-sm text-slate-400 mb-1">{stat.label}</div>
-              <div className={`text-2xl font-bold font-display bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`}>
+              <div className={`text-xl sm:text-2xl font-bold font-display bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`}>
                 {stat.value}
               </div>
             </div>
