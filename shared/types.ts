@@ -49,3 +49,23 @@ export interface FavoriteLine {
   lineId: string;
   createdAt: number;
 }
+
+export type AnomalyType = 'sudden_cold' | 'sudden_hot' | 'volatile';
+
+export interface TemperatureAnomaly {
+  id: string;
+  lineId: string;
+  lineName: string;
+  carriageNumber: number;
+  type: AnomalyType;
+  severity: 'warning' | 'danger';
+  historicalDominantLevel: VoteLevel;
+  recentDominantLevel: VoteLevel;
+  recentVoteCount: number;
+  historicalVoteCount: number;
+  confidenceScore: number;
+  detectedAt: number;
+  suggestedAvoidStart: number;
+  suggestedAvoidEnd: number;
+  description: string;
+}

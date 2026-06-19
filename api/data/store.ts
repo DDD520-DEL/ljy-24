@@ -53,7 +53,85 @@ function generateMockVotes(): Vote[] {
     }
   }
 
+  injectAnomalyTestData(votes, now);
+
   return votes;
+}
+
+function injectAnomalyTestData(votes: Vote[], now: number): void {
+  const targetLine = 'line1';
+  const targetCarriage = 3;
+
+  for (let i = 0; i < 30; i++) {
+    const hourOffset = 1 + Math.floor(Math.random() * 23);
+    const timestamp = now - hourOffset * 3600 * 1000 - Math.floor(Math.random() * 3600 * 1000);
+    const date = new Date(timestamp);
+    const hour = date.getHours();
+    const timeSlot = getTimeSlotFromHour(hour);
+
+    votes.push({
+      id: generateId(),
+      lineId: targetLine,
+      carriageNumber: targetCarriage,
+      level: 'comfortable',
+      timestamp,
+      timeSlot,
+    });
+  }
+
+  for (let i = 0; i < 12; i++) {
+    const minutesAgo = Math.floor(Math.random() * 25);
+    const timestamp = now - minutesAgo * 60 * 1000;
+    const date = new Date(timestamp);
+    const hour = date.getHours();
+    const timeSlot = getTimeSlotFromHour(hour);
+
+    votes.push({
+      id: generateId(),
+      lineId: targetLine,
+      carriageNumber: targetCarriage,
+      level: 'cold',
+      timestamp,
+      timeSlot,
+    });
+  }
+
+  const targetLine2 = 'line10';
+  const targetCarriage2 = 5;
+
+  for (let i = 0; i < 25; i++) {
+    const hourOffset = 1 + Math.floor(Math.random() * 23);
+    const timestamp = now - hourOffset * 3600 * 1000 - Math.floor(Math.random() * 3600 * 1000);
+    const date = new Date(timestamp);
+    const hour = date.getHours();
+    const timeSlot = getTimeSlotFromHour(hour);
+
+    votes.push({
+      id: generateId(),
+      lineId: targetLine2,
+      carriageNumber: targetCarriage2,
+      level: 'comfortable',
+      timestamp,
+      timeSlot,
+    });
+  }
+
+  for (let i = 0; i < 10; i++) {
+    const minutesAgo = Math.floor(Math.random() * 25);
+    const timestamp = now - minutesAgo * 60 * 1000;
+    const date = new Date(timestamp);
+    const hour = date.getHours();
+    const timeSlot = getTimeSlotFromHour(hour);
+
+    votes.push({
+      id: generateId(),
+      lineId: targetLine2,
+      carriageNumber: targetCarriage2,
+      level: 'hot',
+      timestamp,
+      timeSlot,
+    });
+  }
 }
 
 class DataStore {

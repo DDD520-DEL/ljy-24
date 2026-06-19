@@ -1,8 +1,18 @@
 import { Router, type Request, type Response } from 'express';
 import { aggregateLineStats, aggregateTrendData } from '../services/aggregator.js';
+import { detectAnomalies } from '../services/anomalyDetector.js';
 import type { TimeSlot } from '../../shared/types.js';
 
 const router = Router();
+
+router.get('/anomalies', (_req: Request, res: Response) => {
+  try {
+    const anomalies = detectAnomalies();
+    res.json({ success: true, data: anomalies });
+  } catch {
+    res.status(500).json({ success: false, error: 'Failed to detect anomalies' });
+  }
+});
 
 router.get('/:lineId', (req: Request, res: Response) => {
   const { lineId } = req.params;

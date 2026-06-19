@@ -1,11 +1,18 @@
 import { Link, useLocation } from 'react-router-dom';
 import { ThermometerSun, BarChart3 } from 'lucide-react';
+import { useAppStore } from '@/store/appStore';
 
 export default function Header() {
   const location = useLocation();
+  const { anomalies, dismissedAnomalyIds } = useAppStore();
+  const activeAnomalies = anomalies.filter(a => !dismissedAnomalyIds.has(a.id));
+  const bannerHeight = activeAnomalies.length * 88;
 
   return (
-    <header className="sticky top-0 z-50 bg-metro-darker/90 backdrop-blur-md border-b border-metro-border">
+    <header
+      className="sticky z-50 bg-metro-darker/90 backdrop-blur-md border-b border-metro-border"
+      style={{ top: `${bannerHeight}px` }}
+    >
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 group">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-metro-blue to-metro-lightBlue flex items-center justify-center shadow-lg shadow-metro-blue/30 group-hover:scale-105 transition-transform">

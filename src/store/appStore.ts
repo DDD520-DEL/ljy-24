@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { MetroLine, VoteLevel, TimeSlot, LineStats, TrendData, FavoriteLine } from '../../shared/types.js';
+import type { MetroLine, VoteLevel, TimeSlot, LineStats, TrendData, FavoriteLine, TemperatureAnomaly } from '../../shared/types.js';
 
 function getOrCreateUserId(): string {
   let userId = localStorage.getItem('metro_user_id');
@@ -23,6 +23,9 @@ interface AppState {
   userId: string;
   favorites: FavoriteLine[];
   favoriteLineIds: Set<string>;
+  anomalies: TemperatureAnomaly[];
+  anomaliesLoading: boolean;
+  dismissedAnomalyIds: Set<string>;
 
   setLines: (lines: MetroLine[]) => void;
   setSelectedLineId: (id: string | null) => void;
@@ -38,6 +41,8 @@ interface AppState {
   fetchStats: () => Promise<void>;
   fetchTrend: () => Promise<void>;
   fetchFavorites: () => Promise<void>;
+  fetchAnomalies: () => Promise<void>;
+  dismissAnomaly: (anomalyId: string) => void;
   toggleFavorite: (lineId: string) => Promise<boolean>;
   addFavorite: (lineId: string) => Promise<boolean>;
   removeFavorite: (lineId: string) => Promise<boolean>;
@@ -57,6 +62,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   userId: getOrCreateUserId(),
   favorites: [],
   favoriteLineIds: new Set<string>(),
+  anomalies: [],
+  anomaliesLoading: false,
+  dismissedAnomalyIds: new Set<string>(),
 
   setLines: (lines) => set({ lines }),
   setSelectedLineId: (id) => {
@@ -221,5 +229,27 @@ export const useAppStore = create<AppState>((set, get) => ({
     } else {
       return await addFavorite(lineId);
     }
+  },
+
+  fetchAnomalies: async () => {
+    set({ anomaliesLoading: true });
+    try {
+      const res = await fetch('/api/stats/anomalies');
+      const data = await res.json();
+      if (data.success) {
+        set({ anomalies: data.data, anomaliesLoading: false });
+      } else {
+        set({ anomaliesLoading: false });
+      }
+    } catch {
+      set({ anomaliesLoading: false });
+    }
+  },
+
+  dismissAnomaly: (anomalyId: string) => {
+    const { dismissedAnomalyIds } = get();
+    const newDismissed = new Set(dismissedAnomalyIds);
+    newDismissed.add(anomalyId);
+    set({ dismissedAnomalyIds: newDismissed });
   },
 }));
