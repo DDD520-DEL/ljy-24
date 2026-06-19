@@ -62,6 +62,7 @@ interface AppState {
   feedbackList: Feedback[];
   feedbackListLoading: boolean;
   feedbackListTotal: number;
+  exportLoading: boolean;
 
   setLines: (lines: MetroLine[]) => void;
   setSelectedLineId: (id: string | null) => void;
@@ -89,6 +90,7 @@ interface AppState {
   fetchFeedbackList: (carriageNumber: number) => Promise<void>;
   openFeedbackModal: (carriageNumber: number) => void;
   closeFeedbackModal: () => void;
+  exportStats: () => Promise<void>;
   dismissAnomaly: (anomalyId: string) => void;
   toggleFavorite: (lineId: string) => Promise<boolean>;
   addFavorite: (lineId: string) => Promise<boolean>;
@@ -128,6 +130,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   feedbackList: [],
   feedbackListLoading: false,
   feedbackListTotal: 0,
+  exportLoading: false,
 
   setLines: (lines) => set({ lines }),
   setSelectedLineId: (id) => {
@@ -467,5 +470,42 @@ export const useAppStore = create<AppState>((set, get) => ({
       feedbackList: [],
       feedbackListTotal: 0,
     });
+  },
+
+  exportStats: async () => {
+    const { selectedLineId, selectedTimeSlot } = get();
+    if (!selectedLineId) return;
+
+    set({ exportLoading: true });
+    try {
+      const res = await fetch(`/api/stats/${selectedLineId}/export?timeSlot=${selectedTimeSlot}`);
+      if (!res.ok) {
+        set({ error: '导出失败', exportLoading: false });
+        return;
+      }
+      const blob = await res.blob();
+      const contentDisposition = res.headers.get('Content-Disposition') || '';
+      let filename = '统计数据.csv';
+      const match = contentDisposition.match(/filename\*=UTF-8''(.+?)(?:;|$)/);
+      if (match && match[1]) {
+        filename = decodeURIComponent(match[1]);
+      } else {
+        const asciiMatch = contentDisposition.match(/filename="(.+?)"/);
+        if (asciiMatch && asciiMatch[1]) {
+          filename = decodeURIComponent(asciiMatch[1]);
+        }
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      set({ exportLoading: false });
+    } catch {
+      set({ error: '导出失败', exportLoading: false });
+    }
   },
 }));
