@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { useAppStore } from '@/store/appStore';
 import {
   ChevronUp,
@@ -16,6 +17,9 @@ import {
 import type { Announcement, AnnouncementType } from '../../shared/types.js';
 
 const CAROUSEL_INTERVAL = 5000;
+const STORAGE_KEY_CURRENT_INDEX = 'metro_announcement_index';
+const STORAGE_KEY_COLLAPSED = 'metro_announcement_collapsed';
+const STORAGE_KEY_DISMISSED = 'metro_announcement_dismissed';
 
 function getTypeConfig(type: AnnouncementType) {
   switch (type) {
@@ -72,6 +76,56 @@ function formatDate(timestamp: number): string {
   return `${month}月${day}日 ${hours}:${minutes}`;
 }
 
+function getStoredCurrentIndex(): number {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY_CURRENT_INDEX);
+    if (stored) {
+      const idx = parseInt(stored, 10);
+      if (!isNaN(idx) && idx >= 0) {
+        return idx;
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return 0;
+}
+
+function isInternalLink(link: string): boolean {
+  return link.startsWith('/') && !link.startsWith('//');
+}
+
+interface AnnouncementLinkProps {
+  href: string;
+  text: string;
+}
+
+function AnnouncementLink({ href, text }: AnnouncementLinkProps) {
+  if (isInternalLink(href)) {
+    return (
+      <Link
+        to={href}
+        className="inline-flex items-center gap-1 ml-2 text-white font-semibold underline underline-offset-2 hover:no-underline transition-all"
+      >
+        {text}
+        <ExternalLink className="w-3 h-3" />
+      </Link>
+    );
+  }
+
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1 ml-2 text-white font-semibold underline underline-offset-2 hover:no-underline transition-all"
+    >
+      {text}
+      <ExternalLink className="w-3 h-3" />
+    </a>
+  );
+}
+
 interface AnnouncementItemProps {
   announcement: Announcement;
   onDismiss: () => void;
@@ -121,13 +175,10 @@ function AnnouncementItem({ announcement, onDismiss }: AnnouncementItemProps) {
             <p className="text-white/95 text-sm mb-2 leading-relaxed">
               {announcement.content}
               {announcement.link && announcement.linkText && (
-                <a
+                <AnnouncementLink
                   href={announcement.link}
-                  className="inline-flex items-center gap-1 ml-2 text-white font-semibold underline underline-offset-2 hover:no-underline transition-all"
-                >
-                  {announcement.linkText}
-                  <ExternalLink className="w-3 h-3" />
-                </a>
+                  text={announcement.linkText}
+                />
               )}
             </p>
           </div>
@@ -156,7 +207,7 @@ export default function AnnouncementBar() {
     dismissAnnouncement,
   } = useAppStore();
 
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState<number>(getStoredCurrentIndex);
 
   useEffect(() => {
     fetchAnnouncements();
@@ -169,16 +220,37 @@ export default function AnnouncementBar() {
   );
 
   const goToPrev = useCallback(() => {
-    setCurrentIndex((prev) =>
-      prev <= 0 ? activeAnnouncements.length - 1 : prev - 1
-    );
+    setCurrentIndex((prev) => {
+      const newIndex = prev <= 0 ? activeAnnouncements.length - 1 : prev - 1;
+      try {
+        localStorage.setItem(STORAGE_KEY_CURRENT_INDEX, String(newIndex));
+      } catch {
+        // ignore
+      }
+      return newIndex;
+    });
   }, [activeAnnouncements.length]);
 
   const goToNext = useCallback(() => {
-    setCurrentIndex((prev) =>
-      prev >= activeAnnouncements.length - 1 ? 0 : prev + 1
-    );
+    setCurrentIndex((prev) => {
+      const newIndex = prev >= activeAnnouncements.length - 1 ? 0 : prev + 1;
+      try {
+        localStorage.setItem(STORAGE_KEY_CURRENT_INDEX, String(newIndex));
+      } catch {
+        // ignore
+      }
+      return newIndex;
+    });
   }, [activeAnnouncements.length]);
+
+  const handleSetIndex = useCallback((index: number) => {
+    setCurrentIndex(index);
+    try {
+      localStorage.setItem(STORAGE_KEY_CURRENT_INDEX, String(index));
+    } catch {
+      // ignore
+    }
+  }, []);
 
   useEffect(() => {
     if (activeAnnouncements.length <= 1 || announcementsCollapsed) return;
@@ -222,7 +294,7 @@ export default function AnnouncementBar() {
                   {activeAnnouncements.map((_, idx) => (
                     <button
                       key={idx}
-                      onClick={() => setCurrentIndex(idx)}
+                      onClick={() => handleSetIndex(idx)}
                       className={`w-2 h-2 rounded-full transition-all ${
                         idx === currentIndex
                           ? 'bg-metro-lightBlue w-4'

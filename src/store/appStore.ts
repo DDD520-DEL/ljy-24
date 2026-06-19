@@ -27,6 +27,27 @@ function getOrCreateUserId(): string {
   return userId;
 }
 
+function getStoredAnnouncementsCollapsed(): boolean {
+  try {
+    const stored = localStorage.getItem('metro_announcement_collapsed');
+    return stored === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function getStoredDismissedAnnouncementIds(): Set<string> {
+  try {
+    const stored = localStorage.getItem('metro_announcement_dismissed');
+    if (stored) {
+      return new Set(JSON.parse(stored));
+    }
+  } catch {
+    // ignore
+  }
+  return new Set<string>();
+}
+
 interface TrendComparisonData {
   current: TrendData[];
   yesterday?: TrendData[];
@@ -154,8 +175,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   weatherLoading: false,
   announcements: [],
   announcementsLoading: false,
-  announcementsCollapsed: false,
-  dismissedAnnouncementIds: new Set<string>(),
+  announcementsCollapsed: getStoredAnnouncementsCollapsed(),
+  dismissedAnnouncementIds: getStoredDismissedAnnouncementIds(),
 
   setLines: (lines) => set({ lines }),
   setSelectedLineId: (id) => {
@@ -600,13 +621,26 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   toggleAnnouncementsCollapsed: () => {
-    set((state) => ({ announcementsCollapsed: !state.announcementsCollapsed }));
+    set((state) => {
+      const newValue = !state.announcementsCollapsed;
+      try {
+        localStorage.setItem('metro_announcement_collapsed', String(newValue));
+      } catch {
+        // ignore
+      }
+      return { announcementsCollapsed: newValue };
+    });
   },
 
   dismissAnnouncement: (announcementId: string) => {
     const { dismissedAnnouncementIds } = get();
     const newDismissed = new Set(dismissedAnnouncementIds);
     newDismissed.add(announcementId);
+    try {
+      localStorage.setItem('metro_announcement_dismissed', JSON.stringify(Array.from(newDismissed)));
+    } catch {
+      // ignore
+    }
     set({ dismissedAnnouncementIds: newDismissed });
   },
 }));
