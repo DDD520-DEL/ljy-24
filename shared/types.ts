@@ -138,3 +138,16 @@ export interface FeedbackListResponse {
   total: number;
   feedbacks: Feedback[];
 }
+
+export interface UserImpactStats {
+  totalVotes: number;
+  linesCovered: number;
+  helpCount: number;
+}
+
+export interface CarriageViewRecord {
+  lineId: string;
+  carriageNumber: number;
+  viewerUserId?: string;
+  timestamp: number;
+}

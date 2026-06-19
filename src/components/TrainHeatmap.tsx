@@ -10,6 +10,7 @@ export default function TrainHeatmap() {
     feedbackCountMap,
     heatmapDimension,
     openFeedbackModal,
+    recordCarriageView,
   } = useAppStore();
   const line = lines.find((l) => l.id === selectedLineId);
 
@@ -86,7 +87,12 @@ export default function TrainHeatmap() {
                       className="animate-slide-up"
                     >
                       <button
-                        onClick={() => openFeedbackModal(carriage.carriageNumber)}
+                        onClick={() => {
+                          if (selectedLineId) {
+                            recordCarriageView(selectedLineId, carriage.carriageNumber);
+                          }
+                          openFeedbackModal(carriage.carriageNumber);
+                        }}
                         className={`relative w-20 sm:w-24 h-28 sm:h-32 rounded-xl ${getHeatColorClass(carriage.temperatureScore)} shadow-lg overflow-hidden group transition-all duration-300 hover:scale-105 hover:shadow-xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-metro-blue/50`}
                       >
                         {feedbackCount > 0 && (

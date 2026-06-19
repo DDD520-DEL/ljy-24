@@ -13,6 +13,7 @@ import type {
   FeedbackCountMap,
   FeedbackListResponse,
   HeatmapDimension,
+  UserImpactStats,
 } from '../../shared/types.js';
 
 function getOrCreateUserId(): string {
@@ -63,6 +64,8 @@ interface AppState {
   feedbackListLoading: boolean;
   feedbackListTotal: number;
   exportLoading: boolean;
+  userImpactStats: UserImpactStats | null;
+  userImpactLoading: boolean;
 
   setLines: (lines: MetroLine[]) => void;
   setSelectedLineId: (id: string | null) => void;
@@ -96,6 +99,8 @@ interface AppState {
   addFavorite: (lineId: string) => Promise<boolean>;
   removeFavorite: (lineId: string) => Promise<boolean>;
   isFavorite: (lineId: string) => boolean;
+  fetchUserImpactStats: () => Promise<void>;
+  recordCarriageView: (lineId: string, carriageNumber: number) => Promise<void>;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -131,6 +136,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   feedbackListLoading: false,
   feedbackListTotal: 0,
   exportLoading: false,
+  userImpactStats: null,
+  userImpactLoading: false,
 
   setLines: (lines) => set({ lines }),
   setSelectedLineId: (id) => {
@@ -506,6 +513,40 @@ export const useAppStore = create<AppState>((set, get) => ({
       set({ exportLoading: false });
     } catch {
       set({ error: '导出失败', exportLoading: false });
+    }
+  },
+
+  fetchUserImpactStats: async () => {
+    const { userId } = get();
+    set({ userImpactLoading: true });
+    try {
+      const res = await fetch('/api/stats/user-impact', {
+        headers: { 'x-user-id': userId },
+      });
+      const data = await res.json();
+      if (data.success) {
+        set({ userImpactStats: data.data, userImpactLoading: false });
+      } else {
+        set({ userImpactLoading: false });
+      }
+    } catch {
+      set({ userImpactLoading: false });
+    }
+  },
+
+  recordCarriageView: async (lineId: string, carriageNumber: number) => {
+    const { userId } = get();
+    try {
+      await fetch('/api/stats/carriage-view', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': userId,
+        },
+        body: JSON.stringify({ lineId, carriageNumber }),
+      });
+    } catch {
+      // silent fail
     }
   },
 }));

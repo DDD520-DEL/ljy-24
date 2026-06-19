@@ -6,6 +6,7 @@ import CarriagePicker from '@/components/CarriagePicker';
 import StationPicker from '@/components/StationPicker';
 import VoteButtons from '@/components/VoteButtons';
 import VoteSuccessModal from '@/components/VoteSuccessModal';
+import ImpactPanel from '@/components/ImpactPanel';
 import { Link } from 'react-router-dom';
 import { BarChart3, Info } from 'lucide-react';
 
@@ -33,6 +34,10 @@ export default function Home() {
             <p className="text-slate-400">
               投票你所在车厢的体感温度，让更多人避开冻僵/闷热车厢
             </p>
+          </div>
+
+          <div className="animate-slide-up delay-75 opacity-0 mb-8">
+            <ImpactPanel />
           </div>
 
           {error && (

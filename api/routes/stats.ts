@@ -27,6 +27,40 @@ router.get('/anomalies', (_req: Request, res: Response) => {
   }
 });
 
+router.get('/user-impact', (req: Request, res: Response) => {
+  try {
+    const userId = (req.headers['x-user-id'] as string) || 'user_mock_history';
+    if (!userId) {
+      res.status(400).json({ success: false, error: 'Missing user id' });
+      return;
+    }
+    const stats = dataStore.getUserImpactStats(userId);
+    res.json({ success: true, data: stats });
+  } catch {
+    res.status(500).json({ success: false, error: 'Failed to get user impact stats' });
+  }
+});
+
+router.post('/carriage-view', (req: Request, res: Response) => {
+  try {
+    const { lineId, carriageNumber } = req.body as {
+      lineId: string;
+      carriageNumber: number;
+    };
+    const viewerUserId = req.headers['x-user-id'] as string | undefined;
+
+    if (!lineId || !carriageNumber) {
+      res.status(400).json({ success: false, error: 'Missing required fields' });
+      return;
+    }
+
+    dataStore.addCarriageView(lineId, carriageNumber, viewerUserId);
+    res.json({ success: true });
+  } catch {
+    res.status(500).json({ success: false, error: 'Failed to record carriage view' });
+  }
+});
+
 router.get('/:lineId/export', (req: Request, res: Response) => {
   const { lineId } = req.params;
   const timeSlot = (req.query.timeSlot as TimeSlot) || 'all';

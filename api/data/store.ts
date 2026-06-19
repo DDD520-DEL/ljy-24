@@ -1,4 +1,4 @@
-import type { MetroLine, Vote, VoteLevel, TimeSlot, FavoriteLine, Feedback, FeedbackCountMap, MetroStation, StationSection } from '../../shared/types.js';
+import type { MetroLine, Vote, VoteLevel, TimeSlot, FavoriteLine, Feedback, FeedbackCountMap, MetroStation, StationSection, UserImpactStats, CarriageViewRecord } from '../../shared/types.js';
 
 function generateStations(lineId: string, names: string[]): MetroStation[] {
   return names.map((name, index) => ({
@@ -382,16 +382,53 @@ function generateMockFeedbacks(votes: Vote[]): Feedback[] {
   return feedbacks.sort((a, b) => b.timestamp - a.timestamp);
 }
 
+function generateMockCarriageViews(votes: Vote[], lines: MetroLine[]): CarriageViewRecord[] {
+  const views: CarriageViewRecord[] = [];
+  const now = Date.now();
+
+  for (const vote of votes) {
+    const viewCount = 3 + Math.floor(Math.random() * 15);
+    for (let i = 0; i < viewCount; i++) {
+      const minutesAfter = Math.floor(Math.random() * 60 * 24 * 5);
+      const timestamp = vote.timestamp + minutesAfter * 60 * 1000;
+      if (timestamp > now) continue;
+
+      views.push({
+        lineId: vote.lineId,
+        carriageNumber: vote.carriageNumber,
+        viewerUserId: Math.random() > 0.3 ? 'viewer_' + Math.random().toString(36).substring(2, 8) : undefined,
+        timestamp,
+      });
+    }
+  }
+
+  for (let i = 0; i < 500; i++) {
+    const line = lines[Math.floor(Math.random() * lines.length)];
+    const carriage = 1 + Math.floor(Math.random() * line.carriageCount);
+    const minutesAgo = Math.floor(Math.random() * 60 * 24 * 7);
+    views.push({
+      lineId: line.id,
+      carriageNumber: carriage,
+      viewerUserId: 'viewer_' + Math.random().toString(36).substring(2, 8),
+      timestamp: now - minutesAgo * 60 * 1000,
+    });
+  }
+
+  return views;
+}
+
 class DataStore {
   private votes: Vote[] = [];
   private feedbacks: Feedback[] = [];
   private favorites: Map<string, FavoriteLine[]> = new Map();
   private initializedUsers: Set<string> = new Set();
+  private carriageViews: CarriageViewRecord[] = [];
 
   constructor() {
     const baseVotes = generateMockVotes();
     this.votes = [...baseVotes];
     this.feedbacks = generateMockFeedbacks(baseVotes);
+    this.carriageViews = generateMockCarriageViews(baseVotes, LINES);
     this.ensureUserHistoryData('user_mock_history');
   }
 
@@ -587,6 +624,47 @@ class DataStore {
       countMap[f.carriageNumber] = (countMap[f.carriageNumber] || 0) + 1;
     }
     return countMap;
+  }
+
+  addCarriageView(lineId: string, carriageNumber: number, viewerUserId?: string): void {
+    this.carriageViews.push({
+      lineId,
+      carriageNumber,
+      viewerUserId,
+      timestamp: Date.now(),
+    });
+  }
+
+  getUserImpactStats(userId: string): UserImpactStats {
+    this.ensureUserHistoryData(userId);
+
+    const userVotes = this.votes.filter((v) => v.userId === userId);
+    const totalVotes = userVotes.length;
+
+    const lineIds = new Set(userVotes.map((v) => v.lineId));
+    const linesCovered = lineIds.size;
+
+    const userVotedCarriages = new Set(
+      userVotes.map((v) => `${v.lineId}_${v.carriageNumber}`),
+    );
+
+    let helpCount = 0;
+    for (const view of this.carriageViews) {
+      const key = `${view.lineId}_${view.carriageNumber}`;
+      if (userVotedCarriages.has(key)) {
+        if (view.viewerUserId && view.viewerUserId !== userId) {
+          helpCount++;
+        } else if (!view.viewerUserId) {
+          helpCount++;
+        }
+      }
+    }
+
+    return {
+      totalVotes,
+      linesCovered,
+      helpCount,
+    };
   }
 }
 
