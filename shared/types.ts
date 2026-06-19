@@ -43,3 +43,9 @@ export interface TrendData {
   comfortableCount: number;
   hotCount: number;
 }
+
+export interface FavoriteLine {
+  id: string;
+  lineId: string;
+  createdAt: number;
+}

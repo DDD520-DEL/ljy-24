@@ -1,4 +1,4 @@
-import type { MetroLine, Vote, VoteLevel, TimeSlot } from '../../shared/types.js';
+import type { MetroLine, Vote, VoteLevel, TimeSlot, FavoriteLine } from '../../shared/types.js';
 
 const LINES: MetroLine[] = [
   { id: 'line1', name: '1号线', color: '#C23A30', carriageCount: 6 },
@@ -58,6 +58,7 @@ function generateMockVotes(): Vote[] {
 
 class DataStore {
   private votes: Vote[] = [];
+  private favorites: Map<string, FavoriteLine[]> = new Map();
 
   constructor() {
     this.votes = generateMockVotes();
@@ -99,6 +100,45 @@ class DataStore {
 
     this.votes.push(vote);
     return vote;
+  }
+
+  getFavorites(userId: string): FavoriteLine[] {
+    return this.favorites.get(userId) || [];
+  }
+
+  isFavorite(userId: string, lineId: string): boolean {
+    const userFavorites = this.favorites.get(userId) || [];
+    return userFavorites.some((f) => f.lineId === lineId);
+  }
+
+  addFavorite(userId: string, lineId: string): FavoriteLine | null {
+    if (!this.getLineById(lineId)) {
+      return null;
+    }
+    if (this.isFavorite(userId, lineId)) {
+      const userFavorites = this.favorites.get(userId) || [];
+      return userFavorites.find((f) => f.lineId === lineId) || null;
+    }
+    const favorite: FavoriteLine = {
+      id: generateId(),
+      lineId,
+      createdAt: Date.now(),
+    };
+    const userFavorites = this.favorites.get(userId) || [];
+    userFavorites.push(favorite);
+    this.favorites.set(userId, userFavorites);
+    return favorite;
+  }
+
+  removeFavorite(userId: string, lineId: string): boolean {
+    const userFavorites = this.favorites.get(userId) || [];
+    const index = userFavorites.findIndex((f) => f.lineId === lineId);
+    if (index === -1) {
+      return false;
+    }
+    userFavorites.splice(index, 1);
+    this.favorites.set(userId, userFavorites);
+    return true;
   }
 }
 

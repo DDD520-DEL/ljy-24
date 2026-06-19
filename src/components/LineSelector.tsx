@@ -1,13 +1,25 @@
 import { useAppStore } from '@/store/appStore';
-import { ChevronDown, Train } from 'lucide-react';
+import { ChevronDown, Star, Train } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
+import { cn } from '@/lib/utils';
 
 export default function LineSelector() {
-  const { lines, selectedLineId, setSelectedLineId } = useAppStore();
+  const {
+    lines,
+    selectedLineId,
+    setSelectedLineId,
+    favorites,
+    isFavorite,
+    toggleFavorite,
+  } = useAppStore();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   const selectedLine = lines.find((l) => l.id === selectedLineId);
+
+  const favoriteLines = favorites
+    .map((f) => lines.find((l) => l.id === f.lineId))
+    .filter((l): l is NonNullable<typeof l> => l !== undefined);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -21,6 +33,66 @@ export default function LineSelector() {
 
   return (
     <div className="relative w-full" ref={ref}>
+      {favoriteLines.length > 0 && (
+        <div className="mb-4 animate-fade-in">
+          <label className="block text-sm font-medium text-slate-300 mb-2">
+            <span className="inline-flex items-center gap-1.5">
+              <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+              常用线路
+            </span>
+            <span className="ml-2 text-xs text-slate-500 font-normal">
+              点击快速切换
+            </span>
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {favoriteLines.map((line, idx) => {
+              const isSelected = selectedLineId === line.id;
+              return (
+                <div
+                  key={line.id}
+                  style={{ animationDelay: `${idx * 50}ms` }}
+                  className={cn(
+                    'animate-slide-up flex items-center gap-1 px-1.5 py-1 rounded-xl transition-all',
+                    isSelected
+                      ? 'bg-metro-blue/20 border border-metro-blue/50 shadow-lg shadow-metro-blue/10'
+                      : 'bg-metro-card border border-metro-border hover:border-metro-border/80',
+                  )}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setSelectedLineId(line.id)}
+                    className={cn(
+                      'flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-all',
+                      isSelected ? 'text-white' : 'text-slate-400 hover:text-white',
+                    )}
+                  >
+                    <span
+                      className="w-6 h-6 rounded-full flex items-center justify-center shadow-md"
+                      style={{ backgroundColor: line.color }}
+                    >
+                      <Train className="w-3.5 h-3.5 text-white" />
+                    </span>
+                    <span className="whitespace-nowrap">{line.name}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => toggleFavorite(line.id)}
+                    title={isFavorite(line.id) ? '取消收藏' : '收藏线路'}
+                    className={cn(
+                      'p-1 rounded-lg transition-all',
+                      'text-yellow-400 hover:bg-yellow-400/10',
+                    )}
+                  >
+                    <Star className="w-3.5 h-3.5 fill-yellow-400" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-3 border-t border-metro-border/50" />
+        </div>
+      )}
+
       <label className="block text-sm font-medium text-slate-300 mb-2">
         选择地铁线路
       </label>
@@ -53,30 +125,55 @@ export default function LineSelector() {
       {open && (
         <div className="absolute z-20 mt-2 w-full bg-metro-card border border-metro-border rounded-xl shadow-2xl overflow-hidden animate-fade-in">
           <div className="max-h-64 overflow-y-auto">
-            {lines.map((line) => (
-              <button
-                key={line.id}
-                type="button"
-                onClick={() => {
-                  setSelectedLineId(line.id);
-                  setOpen(false);
-                }}
-                className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-metro-blue/10 transition-colors ${
-                  selectedLineId === line.id ? 'bg-metro-blue/15' : ''
-                }`}
-              >
-                <span
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-md"
-                  style={{ backgroundColor: line.color }}
+            {lines.map((line) => {
+              const fav = isFavorite(line.id);
+              return (
+                <div
+                  key={line.id}
+                  className={`flex items-center gap-2 px-2 hover:bg-metro-blue/10 transition-colors ${
+                    selectedLineId === line.id ? 'bg-metro-blue/15' : ''
+                  }`}
                 >
-                  <Train className="w-4 h-4" />
-                </span>
-                <div className="text-left flex-1">
-                  <div className="text-white font-medium">{line.name}</div>
-                  <div className="text-slate-500 text-xs">{line.carriageCount}节编组</div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedLineId(line.id);
+                      setOpen(false);
+                    }}
+                    className="flex-1 flex items-center gap-3 py-3 pr-2"
+                  >
+                    <span
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-md"
+                      style={{ backgroundColor: line.color }}
+                    >
+                      <Train className="w-4 h-4" />
+                    </span>
+                    <div className="text-left flex-1">
+                      <div className="text-white font-medium">{line.name}</div>
+                      <div className="text-slate-500 text-xs">{line.carriageCount}节编组</div>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => toggleFavorite(line.id)}
+                    title={fav ? '取消收藏' : '收藏线路'}
+                    className={cn(
+                      'p-2 rounded-lg transition-all flex-shrink-0',
+                      fav
+                        ? 'text-yellow-400 hover:bg-yellow-400/10'
+                        : 'text-slate-600 hover:text-yellow-400 hover:bg-yellow-400/5',
+                    )}
+                  >
+                    <Star
+                      className={cn(
+                        'w-4 h-4 transition-all',
+                        fav ? 'fill-yellow-400' : '',
+                      )}
+                    />
+                  </button>
                 </div>
-              </button>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

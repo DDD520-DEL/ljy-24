@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAppStore } from '@/store/appStore';
-import type { VoteLevel } from '../../../shared/types';
+import type { VoteLevel } from 'shared/types.js';
 
 interface VoteButtonProps {
   level: VoteLevel;

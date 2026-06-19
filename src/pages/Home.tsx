@@ -9,13 +9,14 @@ import { Link } from 'react-router-dom';
 import { BarChart3, Info } from 'lucide-react';
 
 export default function Home() {
-  const { fetchLines, lines, error, selectedLineId, selectedCarriage } = useAppStore();
+  const { fetchLines, fetchFavorites, lines, error, selectedLineId, selectedCarriage } = useAppStore();
 
   useEffect(() => {
     if (lines.length === 0) {
       fetchLines();
     }
-  }, [fetchLines, lines.length]);
+    fetchFavorites();
+  }, [fetchLines, fetchFavorites, lines.length]);
 
   return (
     <div className="min-h-screen">

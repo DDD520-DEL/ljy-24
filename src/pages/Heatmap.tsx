@@ -12,6 +12,7 @@ export default function Heatmap() {
     fetchLines,
     fetchStats,
     fetchTrend,
+    fetchFavorites,
     lines,
     selectedLineId,
     selectedTimeSlot,
@@ -21,7 +22,8 @@ export default function Heatmap() {
     if (lines.length === 0) {
       fetchLines();
     }
-  }, [fetchLines, lines.length]);
+    fetchFavorites();
+  }, [fetchLines, fetchFavorites, lines.length]);
 
   useEffect(() => {
     if (selectedLineId) {

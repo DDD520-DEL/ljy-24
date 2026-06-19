@@ -1,5 +1,14 @@
 import { create } from 'zustand';
-import type { MetroLine, VoteLevel, TimeSlot, LineStats, TrendData } from '../../shared/types.js';
+import type { MetroLine, VoteLevel, TimeSlot, LineStats, TrendData, FavoriteLine } from '../../shared/types.js';
+
+function getOrCreateUserId(): string {
+  let userId = localStorage.getItem('metro_user_id');
+  if (!userId) {
+    userId = 'user_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+    localStorage.setItem('metro_user_id', userId);
+  }
+  return userId;
+}
 
 interface AppState {
   lines: MetroLine[];
@@ -11,6 +20,9 @@ interface AppState {
   voteSuccess: boolean;
   loading: boolean;
   error: string | null;
+  userId: string;
+  favorites: FavoriteLine[];
+  favoriteLineIds: Set<string>;
 
   setLines: (lines: MetroLine[]) => void;
   setSelectedLineId: (id: string | null) => void;
@@ -25,6 +37,11 @@ interface AppState {
   fetchLines: () => Promise<void>;
   fetchStats: () => Promise<void>;
   fetchTrend: () => Promise<void>;
+  fetchFavorites: () => Promise<void>;
+  toggleFavorite: (lineId: string) => Promise<boolean>;
+  addFavorite: (lineId: string) => Promise<boolean>;
+  removeFavorite: (lineId: string) => Promise<boolean>;
+  isFavorite: (lineId: string) => boolean;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -37,6 +54,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   voteSuccess: false,
   loading: false,
   error: null,
+  userId: getOrCreateUserId(),
+  favorites: [],
+  favoriteLineIds: new Set<string>(),
 
   setLines: (lines) => set({ lines }),
   setSelectedLineId: (id) => {
@@ -49,6 +69,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   setVoteSuccess: (val) => set({ voteSuccess: val }),
   setLoading: (val) => set({ loading: val }),
   setError: (err) => set({ error: err }),
+
+  isFavorite: (lineId: string) => {
+    return get().favoriteLineIds.has(lineId);
+  },
 
   submitVote: async (level) => {
     const { selectedLineId, selectedCarriage } = get();
@@ -130,6 +154,72 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
     } catch {
       // silent fail for trend
+    }
+  },
+
+  fetchFavorites: async () => {
+    const { userId } = get();
+    try {
+      const res = await fetch('/api/favorites', {
+        headers: { 'x-user-id': userId },
+      });
+      const data = await res.json();
+      if (data.success) {
+        const favorites: FavoriteLine[] = data.data;
+        const favoriteLineIds = new Set(favorites.map((f) => f.lineId));
+        set({ favorites, favoriteLineIds });
+      }
+    } catch {
+      // silent fail
+    }
+  },
+
+  addFavorite: async (lineId: string) => {
+    const { userId } = get();
+    try {
+      const res = await fetch('/api/favorites', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': userId,
+        },
+        body: JSON.stringify({ lineId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        await get().fetchFavorites();
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  },
+
+  removeFavorite: async (lineId: string) => {
+    const { userId } = get();
+    try {
+      const res = await fetch(`/api/favorites/${lineId}`, {
+        method: 'DELETE',
+        headers: { 'x-user-id': userId },
+      });
+      const data = await res.json();
+      if (data.success) {
+        await get().fetchFavorites();
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  },
+
+  toggleFavorite: async (lineId: string) => {
+    const { isFavorite, addFavorite, removeFavorite } = get();
+    if (isFavorite(lineId)) {
+      return await removeFavorite(lineId);
+    } else {
+      return await addFavorite(lineId);
     }
   },
 }));

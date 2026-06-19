@@ -1,5 +1,5 @@
 import { useAppStore } from '@/store/appStore';
-import type { TimeSlot } from '../../../shared/types';
+import type { TimeSlot } from 'shared/types.js';
 import { getTimeSlotLabel } from '@/utils/heatmap';
 
 const SLOTS: TimeSlot[] = ['all', 'morning', 'evening', 'offpeak'];
