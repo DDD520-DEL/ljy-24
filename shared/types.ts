@@ -16,6 +16,13 @@ export interface StationSection {
   stationIndices: number[];
 }
 
+export interface LineTimetable {
+  firstTrain: string;
+  lastTrain: string;
+  firstTrainWeekend?: string;
+  lastTrainWeekend?: string;
+}
+
 export interface MetroLine {
   id: string;
   name: string;
@@ -23,6 +30,7 @@ export interface MetroLine {
   carriageCount: number;
   stations: MetroStation[];
   stationSections: StationSection[];
+  timetable: LineTimetable;
 }
 
 export interface Vote {

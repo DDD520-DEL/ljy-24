@@ -83,12 +83,12 @@ const LINE14_STATIONS = generateStations('line14', [
 ]);
 
 const LINES: MetroLine[] = [
-  { id: 'line1', name: '1号线', color: '#C23A30', carriageCount: 6, stations: LINE1_STATIONS, stationSections: generateSections('line1', LINE1_STATIONS) },
-  { id: 'line2', name: '2号线', color: '#006098', carriageCount: 6, stations: LINE2_STATIONS, stationSections: generateSections('line2', LINE2_STATIONS) },
-  { id: 'line5', name: '5号线', color: '#A6217E', carriageCount: 6, stations: LINE5_STATIONS, stationSections: generateSections('line5', LINE5_STATIONS) },
-  { id: 'line10', name: '10号线', color: '#0090A3', carriageCount: 8, stations: LINE10_STATIONS, stationSections: generateSections('line10', LINE10_STATIONS) },
-  { id: 'line13', name: '13号线', color: '#F3D03E', carriageCount: 6, stations: LINE13_STATIONS, stationSections: generateSections('line13', LINE13_STATIONS) },
-  { id: 'line14', name: '14号线', color: '#D4A455', carriageCount: 6, stations: LINE14_STATIONS, stationSections: generateSections('line14', LINE14_STATIONS) },
+  { id: 'line1', name: '1号线', color: '#C23A30', carriageCount: 6, stations: LINE1_STATIONS, stationSections: generateSections('line1', LINE1_STATIONS), timetable: { firstTrain: '05:10', lastTrain: '23:15', firstTrainWeekend: '05:20', lastTrainWeekend: '23:15' } },
+  { id: 'line2', name: '2号线', color: '#006098', carriageCount: 6, stations: LINE2_STATIONS, stationSections: generateSections('line2', LINE2_STATIONS), timetable: { firstTrain: '05:03', lastTrain: '23:44', firstTrainWeekend: '05:10', lastTrainWeekend: '23:44' } },
+  { id: 'line5', name: '5号线', color: '#A6217E', carriageCount: 6, stations: LINE5_STATIONS, stationSections: generateSections('line5', LINE5_STATIONS), timetable: { firstTrain: '05:19', lastTrain: '23:10', firstTrainWeekend: '05:30', lastTrainWeekend: '23:10' } },
+  { id: 'line10', name: '10号线', color: '#0090A3', carriageCount: 8, stations: LINE10_STATIONS, stationSections: generateSections('line10', LINE10_STATIONS), timetable: { firstTrain: '04:54', lastTrain: '22:27', firstTrainWeekend: '05:10', lastTrainWeekend: '22:27' } },
+  { id: 'line13', name: '13号线', color: '#F3D03E', carriageCount: 6, stations: LINE13_STATIONS, stationSections: generateSections('line13', LINE13_STATIONS), timetable: { firstTrain: '05:35', lastTrain: '22:42', firstTrainWeekend: '05:50', lastTrainWeekend: '22:42' } },
+  { id: 'line14', name: '14号线', color: '#D4A455', carriageCount: 6, stations: LINE14_STATIONS, stationSections: generateSections('line14', LINE14_STATIONS), timetable: { firstTrain: '05:00', lastTrain: '22:30', firstTrainWeekend: '05:15', lastTrainWeekend: '22:30' } },
 ];
 
 function generateId(): string {

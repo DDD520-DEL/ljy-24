@@ -6,6 +6,7 @@ import TimeSlotPicker from '@/components/TimeSlotPicker';
 import StationDimensionToggle from '@/components/StationDimensionToggle';
 import TrainHeatmap from '@/components/TrainHeatmap';
 import StatsCards from '@/components/StatsCards';
+import LineTimetable from '@/components/LineTimetable';
 import TrendChart from '@/components/TrendChart';
 import FeedbackListModal from '@/components/FeedbackListModal';
 
@@ -64,6 +65,10 @@ export default function Heatmap() {
 
             <div className="animate-slide-up delay-300 opacity-0">
               <StatsCards />
+            </div>
+
+            <div className="animate-slide-up delay-350 opacity-0">
+              <LineTimetable />
             </div>
 
             <div className="animate-slide-up delay-400 opacity-0">
