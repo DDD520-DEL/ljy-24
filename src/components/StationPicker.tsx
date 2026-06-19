@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAppStore } from '@/store/appStore';
 import { MapPin, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -6,7 +6,14 @@ import { cn } from '@/lib/utils';
 export default function StationPicker() {
   const { lines, selectedLineId, selectedStationSectionId, setSelectedStationSectionId } = useAppStore();
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+
+  useEffect(() => {
+    setExpandedSection(null);
+  }, [selectedLineId]);
+
   const line = lines.find((l) => l.id === selectedLineId);
+  const sections = line?.stationSections || [];
+  const stations = line?.stations || [];
 
   if (!selectedLineId || !line) {
     return (
@@ -21,12 +28,23 @@ export default function StationPicker() {
     );
   }
 
-  const sections = line.stationSections;
+  if (sections.length === 0) {
+    return (
+      <div className="w-full">
+        <label className="block text-sm font-medium text-slate-300 mb-2">
+          选择所在站点区间
+        </label>
+        <div className="bg-metro-card/50 border border-dashed border-metro-border rounded-xl p-8 text-center text-slate-500 text-sm">
+          暂无站点数据
+        </div>
+      </div>
+    );
+  }
 
   const getSectionStations = (sectionId: string) => {
     const section = sections.find((s) => s.id === sectionId);
     if (!section) return [];
-    return line.stations.filter((st) => section.stationIndices.includes(st.index));
+    return stations.filter((st) => section.stationIndices.includes(st.index));
   };
 
   return (
@@ -45,8 +63,8 @@ export default function StationPicker() {
         {sections.map((section, idx) => {
           const isSelected = selectedStationSectionId === section.id;
           const isExpanded = expandedSection === section.id;
-          const stations = getSectionStations(section.id);
-          const stationNames = stations.map((s) => s.name).join('、');
+          const sectionStations = getSectionStations(section.id);
+          const stationNames = sectionStations.map((s) => s.name).join('、');
 
           return (
             <div
@@ -62,15 +80,15 @@ export default function StationPicker() {
                     : 'bg-metro-card border border-metro-border hover:border-metro-blue/30',
                 )}
               >
-                <button
-                  type="button"
-                  onClick={() => setSelectedStationSectionId(isSelected ? null : section.id)}
-                  className="w-full flex items-center justify-between px-4 py-3 text-left"
-                >
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedStationSectionId(isSelected ? null : section.id)}
+                    className="flex-1 flex items-center gap-3 px-4 py-3 text-left"
+                  >
                     <div
                       className={cn(
-                        'w-8 h-8 rounded-lg flex items-center justify-center transition-colors',
+                        'w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0',
                         isSelected ? 'bg-metro-blue/30' : 'bg-metro-border/50',
                       )}
                     >
@@ -81,27 +99,25 @@ export default function StationPicker() {
                         )}
                       />
                     </div>
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <div
                         className={cn(
-                          'font-medium transition-colors',
+                          'font-medium transition-colors truncate',
                           isSelected ? 'text-white' : 'text-slate-300',
                         )}
                       >
                         {section.name}
                       </div>
                       <div className="text-xs text-slate-500 mt-0.5">
-                        {stations.length} 个站点
+                        {sectionStations.length} 个站点
                       </div>
                     </div>
-                  </div>
+                  </button>
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setExpandedSection(isExpanded ? null : section.id);
-                    }}
-                    className="p-1.5 rounded-lg hover:bg-white/5 transition-colors"
+                    onClick={() => setExpandedSection(isExpanded ? null : section.id)}
+                    className="p-3 rounded-lg hover:bg-white/5 transition-colors flex-shrink-0"
+                    aria-label={isExpanded ? '收起站点列表' : '展开站点列表'}
                   >
                     {isExpanded ? (
                       <ChevronUp className="w-4 h-4 text-slate-400" />
@@ -109,12 +125,12 @@ export default function StationPicker() {
                       <ChevronDown className="w-4 h-4 text-slate-400" />
                     )}
                   </button>
-                </button>
+                </div>
 
                 {isExpanded && (
                   <div className="px-4 pb-3 pt-1 border-t border-metro-border/50 animate-fade-in">
                     <div className="text-xs text-slate-500 leading-relaxed">
-                      {stationNames}
+                      {stationNames || '暂无站点信息'}
                     </div>
                   </div>
                 )}
@@ -130,7 +146,10 @@ export default function StationPicker() {
 
       {selectedStationSectionId && (
         <p className="mt-3 text-sm text-metro-lightBlue animate-fade-in">
-          已选择 <span className="font-bold">{sections.find((s) => s.id === selectedStationSectionId)?.name}</span>
+          已选择{' '}
+          <span className="font-bold">
+            {sections.find((s) => s.id === selectedStationSectionId)?.name || ''}
+          </span>
         </p>
       )}
     </div>
