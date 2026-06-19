@@ -41,9 +41,11 @@ export default function Header() {
           </div>
         </Link>
 
-        <WeatherWidget />
+        <div className="hidden sm:block">
+          <WeatherWidget />
+        </div>
 
-        <nav className="flex items-center gap-1">
+        <nav className="hidden sm:flex items-center gap-1">
           <Link
             to="/"
             className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${

@@ -144,3 +144,8 @@ body {
     transform: translate(var(--tx), var(--ty)) scale(0);
   }
 }
+
+/* Safe area for iOS devices with home indicator */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
