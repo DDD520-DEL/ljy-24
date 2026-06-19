@@ -1,6 +1,55 @@
 import { useAppStore } from '@/store/appStore';
-import { Star, Train } from 'lucide-react';
+import { Star, Train, ArrowRightLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { TransferLine } from '../../shared/types.js';
+
+function TransferBadges({ transferLines }: { transferLines: TransferLine[] }) {
+  if (!transferLines || transferLines.length === 0) return null;
+
+  return (
+    <div className="relative group">
+      <div className="flex items-center -space-x-1">
+        <ArrowRightLeft className="w-3 h-3 text-emerald-400 mr-1" />
+        {transferLines.slice(0, 4).map((tl) => (
+          <span
+            key={tl.lineId}
+            className="w-4 h-4 rounded-full border-2 border-metro-bg shadow-sm"
+            style={{ backgroundColor: tl.lineColor }}
+            title={tl.lineName}
+          />
+        ))}
+        {transferLines.length > 4 && (
+          <span className="w-4 h-4 rounded-full bg-slate-600 border-2 border-metro-bg text-[9px] font-bold text-slate-200 flex items-center justify-center">
+            +{transferLines.length - 4}
+          </span>
+        )}
+      </div>
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-50 pointer-events-none">
+        <div className="bg-metro-card border border-metro-border rounded-lg px-3 py-2 shadow-xl whitespace-nowrap animate-fade-in">
+          <div className="text-xs font-medium text-slate-300 mb-1.5 flex items-center gap-1">
+            <ArrowRightLeft className="w-3 h-3 text-emerald-400" />
+            可换乘线路
+          </div>
+          <div className="space-y-1">
+            {transferLines.map((tl) => (
+              <div key={tl.lineId} className="flex items-center gap-2 text-xs">
+                <span
+                  className="w-3 h-3 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: tl.lineColor }}
+                />
+                <span className="text-slate-200">{tl.lineName}</span>
+                <span className="text-slate-500">
+                  ({tl.stations.join('、')})
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="w-2 h-2 bg-metro-card border-b border-r border-metro-border rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2" />
+      </div>
+    </div>
+  );
+}
 
 export default function LineTabs() {
   const {
@@ -16,7 +65,7 @@ export default function LineTabs() {
       <label className="block text-sm font-medium text-slate-300 mb-2">
         切换线路
         <span className="ml-2 text-xs text-slate-500 font-normal">
-          点击 ☆ 可收藏常用线路
+          点击 ☆ 可收藏常用线路 · <span className="inline-flex items-center gap-1"><ArrowRightLeft className="w-3 h-3 text-emerald-400" /> 表示可换乘</span>
         </span>
       </label>
       <div className="overflow-x-auto hide-scrollbar pb-1">
@@ -50,6 +99,7 @@ export default function LineTabs() {
                     <Train className="w-3 h-3 text-white" />
                   </span>
                   <span className="whitespace-nowrap">{line.name}</span>
+                  <TransferBadges transferLines={line.transferLines} />
                 </button>
                 <button
                   type="button"

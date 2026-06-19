@@ -23,6 +23,13 @@ export interface LineTimetable {
   lastTrainWeekend?: string;
 }
 
+export interface TransferLine {
+  lineId: string;
+  lineName: string;
+  lineColor: string;
+  stations: string[];
+}
+
 export interface MetroLine {
   id: string;
   name: string;
@@ -31,6 +38,7 @@ export interface MetroLine {
   stations: MetroStation[];
   stationSections: StationSection[];
   timetable: LineTimetable;
+  transferLines: TransferLine[];
 }
 
 export interface Vote {

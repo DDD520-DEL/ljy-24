@@ -1,4 +1,4 @@
-import type { MetroLine, Vote, VoteLevel, TimeSlot, FavoriteLine, Feedback, FeedbackCountMap, MetroStation, StationSection, UserImpactStats, CarriageViewRecord } from '../../shared/types.js';
+import type { MetroLine, Vote, VoteLevel, TimeSlot, FavoriteLine, Feedback, FeedbackCountMap, MetroStation, StationSection, UserImpactStats, CarriageViewRecord, TransferLine } from '../../shared/types.js';
 
 function generateStations(lineId: string, names: string[]): MetroStation[] {
   return names.map((name, index) => ({
@@ -82,13 +82,72 @@ const LINE14_STATIONS = generateStations('line14', [
   '善各庄',
 ]);
 
+const LINE_COLORS: Record<string, { id: string; name: string; color: string }> = {
+  line1: { id: 'line1', name: '1号线', color: '#C23A30' },
+  line2: { id: 'line2', name: '2号线', color: '#006098' },
+  line5: { id: 'line5', name: '5号线', color: '#A6217E' },
+  line10: { id: 'line10', name: '10号线', color: '#0090A3' },
+  line13: { id: 'line13', name: '13号线', color: '#F3D03E' },
+  line14: { id: 'line14', name: '14号线', color: '#D4A455' },
+};
+
+function buildTransfer(lineId: string, stations: string[]): TransferLine {
+  const line = LINE_COLORS[lineId];
+  return {
+    lineId: line.id,
+    lineName: line.name,
+    lineColor: line.color,
+    stations,
+  };
+}
+
+const LINE1_TRANSFERS: TransferLine[] = [
+  buildTransfer('line2', ['复兴门', '建国门']),
+  buildTransfer('line5', ['东单']),
+  buildTransfer('line10', ['公主坟', '国贸']),
+  buildTransfer('line14', ['大望路']),
+];
+
+const LINE2_TRANSFERS: TransferLine[] = [
+  buildTransfer('line1', ['复兴门', '建国门']),
+  buildTransfer('line5', ['雍和宫', '崇文门']),
+  buildTransfer('line13', ['西直门', '东直门']),
+];
+
+const LINE5_TRANSFERS: TransferLine[] = [
+  buildTransfer('line1', ['东单']),
+  buildTransfer('line2', ['雍和宫', '崇文门']),
+  buildTransfer('line10', ['惠新西街南口', '宋家庄']),
+  buildTransfer('line13', ['立水桥']),
+  buildTransfer('line14', ['蒲黄榆']),
+];
+
+const LINE10_TRANSFERS: TransferLine[] = [
+  buildTransfer('line1', ['公主坟', '国贸']),
+  buildTransfer('line5', ['惠新西街南口', '宋家庄']),
+  buildTransfer('line13', ['芍药居']),
+  buildTransfer('line14', ['西局', '十里河']),
+];
+
+const LINE13_TRANSFERS: TransferLine[] = [
+  buildTransfer('line2', ['西直门', '东直门']),
+  buildTransfer('line5', ['立水桥']),
+  buildTransfer('line10', ['芍药居']),
+];
+
+const LINE14_TRANSFERS: TransferLine[] = [
+  buildTransfer('line1', ['大望路']),
+  buildTransfer('line5', ['蒲黄榆']),
+  buildTransfer('line10', ['西局', '十里河']),
+];
+
 const LINES: MetroLine[] = [
-  { id: 'line1', name: '1号线', color: '#C23A30', carriageCount: 6, stations: LINE1_STATIONS, stationSections: generateSections('line1', LINE1_STATIONS), timetable: { firstTrain: '05:10', lastTrain: '23:15', firstTrainWeekend: '05:20', lastTrainWeekend: '23:15' } },
-  { id: 'line2', name: '2号线', color: '#006098', carriageCount: 6, stations: LINE2_STATIONS, stationSections: generateSections('line2', LINE2_STATIONS), timetable: { firstTrain: '05:03', lastTrain: '23:44', firstTrainWeekend: '05:10', lastTrainWeekend: '23:44' } },
-  { id: 'line5', name: '5号线', color: '#A6217E', carriageCount: 6, stations: LINE5_STATIONS, stationSections: generateSections('line5', LINE5_STATIONS), timetable: { firstTrain: '05:19', lastTrain: '23:10', firstTrainWeekend: '05:30', lastTrainWeekend: '23:10' } },
-  { id: 'line10', name: '10号线', color: '#0090A3', carriageCount: 8, stations: LINE10_STATIONS, stationSections: generateSections('line10', LINE10_STATIONS), timetable: { firstTrain: '04:54', lastTrain: '22:27', firstTrainWeekend: '05:10', lastTrainWeekend: '22:27' } },
-  { id: 'line13', name: '13号线', color: '#F3D03E', carriageCount: 6, stations: LINE13_STATIONS, stationSections: generateSections('line13', LINE13_STATIONS), timetable: { firstTrain: '05:35', lastTrain: '22:42', firstTrainWeekend: '05:50', lastTrainWeekend: '22:42' } },
-  { id: 'line14', name: '14号线', color: '#D4A455', carriageCount: 6, stations: LINE14_STATIONS, stationSections: generateSections('line14', LINE14_STATIONS), timetable: { firstTrain: '05:00', lastTrain: '22:30', firstTrainWeekend: '05:15', lastTrainWeekend: '22:30' } },
+  { id: 'line1', name: '1号线', color: '#C23A30', carriageCount: 6, stations: LINE1_STATIONS, stationSections: generateSections('line1', LINE1_STATIONS), timetable: { firstTrain: '05:10', lastTrain: '23:15', firstTrainWeekend: '05:20', lastTrainWeekend: '23:15' }, transferLines: LINE1_TRANSFERS },
+  { id: 'line2', name: '2号线', color: '#006098', carriageCount: 6, stations: LINE2_STATIONS, stationSections: generateSections('line2', LINE2_STATIONS), timetable: { firstTrain: '05:03', lastTrain: '23:44', firstTrainWeekend: '05:10', lastTrainWeekend: '23:44' }, transferLines: LINE2_TRANSFERS },
+  { id: 'line5', name: '5号线', color: '#A6217E', carriageCount: 6, stations: LINE5_STATIONS, stationSections: generateSections('line5', LINE5_STATIONS), timetable: { firstTrain: '05:19', lastTrain: '23:10', firstTrainWeekend: '05:30', lastTrainWeekend: '23:10' }, transferLines: LINE5_TRANSFERS },
+  { id: 'line10', name: '10号线', color: '#0090A3', carriageCount: 8, stations: LINE10_STATIONS, stationSections: generateSections('line10', LINE10_STATIONS), timetable: { firstTrain: '04:54', lastTrain: '22:27', firstTrainWeekend: '05:10', lastTrainWeekend: '22:27' }, transferLines: LINE10_TRANSFERS },
+  { id: 'line13', name: '13号线', color: '#F3D03E', carriageCount: 6, stations: LINE13_STATIONS, stationSections: generateSections('line13', LINE13_STATIONS), timetable: { firstTrain: '05:35', lastTrain: '22:42', firstTrainWeekend: '05:50', lastTrainWeekend: '22:42' }, transferLines: LINE13_TRANSFERS },
+  { id: 'line14', name: '14号线', color: '#D4A455', carriageCount: 6, stations: LINE14_STATIONS, stationSections: generateSections('line14', LINE14_STATIONS), timetable: { firstTrain: '05:00', lastTrain: '22:30', firstTrainWeekend: '05:15', lastTrainWeekend: '22:30' }, transferLines: LINE14_TRANSFERS },
 ];
 
 function generateId(): string {

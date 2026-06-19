@@ -1,7 +1,59 @@
 import { useAppStore } from '@/store/appStore';
-import { ChevronDown, Star, Train } from 'lucide-react';
+import { ChevronDown, Star, Train, ArrowRightLeft } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import type { TransferLine } from '../../shared/types.js';
+
+function TransferBadges({ transferLines, compact = false }: { transferLines: TransferLine[]; compact?: boolean }) {
+  if (!transferLines || transferLines.length === 0) return null;
+
+  const size = compact ? 'w-3.5 h-3.5' : 'w-4 h-4';
+  const iconSize = compact ? 'w-2.5 h-2.5' : 'w-3 h-3';
+
+  return (
+    <div className="relative group">
+      <div className="flex items-center -space-x-1">
+        <ArrowRightLeft className={cn(iconSize, 'text-emerald-400 mr-1')} />
+        {transferLines.slice(0, compact ? 3 : 4).map((tl) => (
+          <span
+            key={tl.lineId}
+            className={cn(size, 'rounded-full border-2 border-metro-bg shadow-sm')}
+            style={{ backgroundColor: tl.lineColor }}
+            title={tl.lineName}
+          />
+        ))}
+        {transferLines.length > (compact ? 3 : 4) && (
+          <span className={cn(size, 'rounded-full bg-slate-600 border-2 border-metro-bg text-[9px] font-bold text-slate-200 flex items-center justify-center')}>
+            +{transferLines.length - (compact ? 3 : 4)}
+          </span>
+        )}
+      </div>
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-50 pointer-events-none">
+        <div className="bg-metro-card border border-metro-border rounded-lg px-3 py-2 shadow-xl whitespace-nowrap animate-fade-in">
+          <div className="text-xs font-medium text-slate-300 mb-1.5 flex items-center gap-1">
+            <ArrowRightLeft className="w-3 h-3 text-emerald-400" />
+            可换乘线路
+          </div>
+          <div className="space-y-1">
+            {transferLines.map((tl) => (
+              <div key={tl.lineId} className="flex items-center gap-2 text-xs">
+                <span
+                  className="w-3 h-3 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: tl.lineColor }}
+                />
+                <span className="text-slate-200">{tl.lineName}</span>
+                <span className="text-slate-500">
+                  ({tl.stations.join('、')})
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="w-2 h-2 bg-metro-card border-b border-r border-metro-border rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2" />
+      </div>
+    </div>
+  );
+}
 
 export default function LineSelector() {
   const {
@@ -73,6 +125,7 @@ export default function LineSelector() {
                       <Train className="w-3.5 h-3.5 text-white" />
                     </span>
                     <span className="whitespace-nowrap">{line.name}</span>
+                    <TransferBadges transferLines={line.transferLines} compact />
                   </button>
                   <button
                     type="button"
@@ -110,8 +163,11 @@ export default function LineSelector() {
               >
                 <Train className="w-4 h-4" />
               </span>
-              <span className="text-white font-medium">{selectedLine.name}</span>
-              <span className="text-slate-500 text-sm">· {selectedLine.carriageCount}节编组</span>
+              <div className="flex items-center gap-3">
+                <span className="text-white font-medium">{selectedLine.name}</span>
+                <span className="text-slate-500 text-sm">· {selectedLine.carriageCount}节编组</span>
+                <TransferBadges transferLines={selectedLine.transferLines} />
+              </div>
             </>
           ) : (
             <span className="text-slate-500">请选择线路</span>
@@ -149,7 +205,10 @@ export default function LineSelector() {
                       <Train className="w-4 h-4" />
                     </span>
                     <div className="text-left flex-1">
-                      <div className="text-white font-medium">{line.name}</div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-white font-medium">{line.name}</span>
+                        <TransferBadges transferLines={line.transferLines} compact />
+                      </div>
                       <div className="text-slate-500 text-xs">{line.carriageCount}节编组</div>
                     </div>
                   </button>
