@@ -79,12 +79,13 @@ router.get('/:lineId/:carriageNumber', (req: Request, res: Response) => {
   }
 
   const feedbacks = dataStore.getFeedbacksByCarriage(lineId, carriageNum, limit);
+  const total = dataStore.getFeedbackCountByCarriage(lineId, carriageNum);
   res.json({
     success: true,
     data: {
       lineId,
       carriageNumber: carriageNum,
-      total: feedbacks.length,
+      total,
       feedbacks,
     },
   });

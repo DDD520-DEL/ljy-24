@@ -259,8 +259,6 @@ function generateMockFeedbacks(votes: Vote[]): Feedback[] {
     const carriage = 1 + Math.floor(Math.random() * line.carriageCount);
     const minutesAgo = Math.floor(Math.random() * 60 * 24 * 3);
     const timestamp = now - minutesAgo * 60 * 1000;
-    const hour = new Date(timestamp).getHours();
-    const timeSlot = getTimeSlotFromHour(hour);
 
     let level: VoteLevel;
     const rand = Math.random();
@@ -283,7 +281,6 @@ function generateMockFeedbacks(votes: Vote[]): Feedback[] {
       level,
       timestamp,
     });
-    timeSlot;
   }
 
   return feedbacks.sort((a, b) => b.timestamp - a.timestamp);
@@ -459,6 +456,12 @@ class DataStore {
     return this.feedbacks
       .filter((f) => f.lineId === lineId && f.carriageNumber === carriageNumber)
       .slice(0, limit);
+  }
+
+  getFeedbackCountByCarriage(lineId: string, carriageNumber: number): number {
+    return this.feedbacks.filter(
+      (f) => f.lineId === lineId && f.carriageNumber === carriageNumber,
+    ).length;
   }
 
   getFeedbackCountMap(lineId: string): FeedbackCountMap {
