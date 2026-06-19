@@ -55,6 +55,12 @@ export interface TrendData {
   hotCount: number;
 }
 
+export type TrendCompareMode = 'none' | 'yesterday' | 'lastweek';
+
+export interface TrendDataWithLabel extends TrendData {
+  label: string;
+}
+
 export interface FavoriteLine {
   id: string;
   lineId: string;

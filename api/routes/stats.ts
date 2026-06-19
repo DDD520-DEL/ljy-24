@@ -1,7 +1,11 @@
 import { Router, type Request, type Response } from 'express';
-import { aggregateLineStats, aggregateTrendData } from '../services/aggregator.js';
+import {
+  aggregateLineStats,
+  aggregateTrendData,
+  aggregateTrendDataWithComparison,
+} from '../services/aggregator.js';
 import { detectAnomalies } from '../services/anomalyDetector.js';
-import type { TimeSlot } from '../../shared/types.js';
+import type { TimeSlot, TrendCompareMode } from '../../shared/types.js';
 
 const router = Router();
 
@@ -34,8 +38,22 @@ router.get('/:lineId', (req: Request, res: Response) => {
 
 router.get('/:lineId/trend', (req: Request, res: Response) => {
   const { lineId } = req.params;
-  const trend = aggregateTrendData(lineId);
-  res.json({ success: true, data: trend });
+  const compare = (req.query.compare as TrendCompareMode) || 'none';
+
+  if (!['none', 'yesterday', 'lastweek'].includes(compare)) {
+    res.status(400).json({ success: false, error: 'Invalid compare mode' });
+    return;
+  }
+
+  if (compare === 'none') {
+    const trend = aggregateTrendData(lineId);
+    res.json({ success: true, data: { current: trend } });
+  } else {
+    const includeYesterday = compare === 'yesterday';
+    const includeLastWeek = compare === 'lastweek';
+    const result = aggregateTrendDataWithComparison(lineId, includeYesterday, includeLastWeek);
+    res.json({ success: true, data: result });
+  }
 });
 
 export default router;

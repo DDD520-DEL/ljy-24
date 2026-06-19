@@ -23,33 +23,38 @@ function generateMockVotes(): Vote[] {
   const votes: Vote[] = [];
   const now = Date.now();
 
-  for (const line of LINES) {
-    const voteCount = 150 + Math.floor(Math.random() * 200);
-    for (let i = 0; i < voteCount; i++) {
-      const randomHourOffset = Math.floor(Math.random() * 24);
-      const timestamp = now - randomHourOffset * 3600 * 1000 - Math.floor(Math.random() * 3600 * 1000);
-      const date = new Date(timestamp);
-      const hour = date.getHours();
-      const timeSlot = getTimeSlotFromHour(hour);
+  for (let dayOffset = 0; dayOffset <= 8; dayOffset++) {
+    const dayBase = now - dayOffset * 24 * 3600 * 1000;
+    const dayMultiplier = dayOffset === 0 ? 1 : (dayOffset === 1 || dayOffset === 7 ? 0.85 : 0.6);
 
-      let level: VoteLevel;
-      const rand = Math.random();
-      if (rand < 0.3) {
-        level = 'cold';
-      } else if (rand < 0.75) {
-        level = 'comfortable';
-      } else {
-        level = 'hot';
+    for (const line of LINES) {
+      const voteCount = Math.floor((80 + Math.floor(Math.random() * 120)) * dayMultiplier);
+      for (let i = 0; i < voteCount; i++) {
+        const randomHourOffset = Math.floor(Math.random() * 24);
+        const timestamp = dayBase - randomHourOffset * 3600 * 1000 - Math.floor(Math.random() * 3600 * 1000);
+        const date = new Date(timestamp);
+        const hour = date.getHours();
+        const timeSlot = getTimeSlotFromHour(hour);
+
+        let level: VoteLevel;
+        const rand = Math.random();
+        if (rand < 0.3) {
+          level = 'cold';
+        } else if (rand < 0.75) {
+          level = 'comfortable';
+        } else {
+          level = 'hot';
+        }
+
+        votes.push({
+          id: generateId(),
+          lineId: line.id,
+          carriageNumber: 1 + Math.floor(Math.random() * line.carriageCount),
+          level,
+          timestamp,
+          timeSlot,
+        });
       }
-
-      votes.push({
-        id: generateId(),
-        lineId: line.id,
-        carriageNumber: 1 + Math.floor(Math.random() * line.carriageCount),
-        level,
-        timestamp,
-        timeSlot,
-      });
     }
   }
 
@@ -219,6 +224,20 @@ class DataStore {
   getVotesByLine(lineId: string, timeSlot?: TimeSlot): Vote[] {
     return this.votes.filter((v) => {
       if (v.lineId !== lineId) return false;
+      if (timeSlot && timeSlot !== 'all' && v.timeSlot !== timeSlot) return false;
+      return true;
+    });
+  }
+
+  getVotesByLineAndDateRange(
+    lineId: string,
+    startOfDay: number,
+    endOfDay: number,
+    timeSlot?: TimeSlot,
+  ): Vote[] {
+    return this.votes.filter((v) => {
+      if (v.lineId !== lineId) return false;
+      if (v.timestamp < startOfDay || v.timestamp >= endOfDay) return false;
       if (timeSlot && timeSlot !== 'all' && v.timeSlot !== timeSlot) return false;
       return true;
     });

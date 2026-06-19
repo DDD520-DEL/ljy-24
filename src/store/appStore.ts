@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { MetroLine, VoteLevel, TimeSlot, LineStats, TrendData, FavoriteLine, TemperatureAnomaly, VoteHistoryRecord } from '../../shared/types.js';
+import type { MetroLine, VoteLevel, TimeSlot, LineStats, TrendData, FavoriteLine, TemperatureAnomaly, VoteHistoryRecord, TrendCompareMode } from '../../shared/types.js';
 
 function getOrCreateUserId(): string {
   let userId = localStorage.getItem('metro_user_id');
@@ -10,12 +10,20 @@ function getOrCreateUserId(): string {
   return userId;
 }
 
+interface TrendComparisonData {
+  current: TrendData[];
+  yesterday?: TrendData[];
+  lastWeek?: TrendData[];
+}
+
 interface AppState {
   lines: MetroLine[];
   selectedLineId: string | null;
   selectedCarriage: number | null;
   currentLineStats: LineStats | null;
   currentTrend: TrendData[];
+  trendComparison: TrendComparisonData;
+  trendCompareMode: TrendCompareMode;
   selectedTimeSlot: TimeSlot;
   voteSuccess: boolean;
   loading: boolean;
@@ -36,6 +44,7 @@ interface AppState {
   setSelectedCarriage: (num: number | null) => void;
   setCurrentLineStats: (stats: LineStats | null) => void;
   setCurrentTrend: (trend: TrendData[]) => void;
+  setTrendCompareMode: (mode: TrendCompareMode) => void;
   setSelectedTimeSlot: (slot: TimeSlot) => void;
   setVoteSuccess: (val: boolean) => void;
   setLoading: (val: boolean) => void;
@@ -62,6 +71,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   selectedCarriage: null,
   currentLineStats: null,
   currentTrend: [],
+  trendComparison: { current: [] },
+  trendCompareMode: 'none',
   selectedTimeSlot: 'all',
   voteSuccess: false,
   loading: false,
@@ -84,6 +95,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   setSelectedCarriage: (num) => set({ selectedCarriage: num }),
   setCurrentLineStats: (stats) => set({ currentLineStats: stats }),
   setCurrentTrend: (trend) => set({ currentTrend: trend }),
+  setTrendCompareMode: (mode) => {
+    set({ trendCompareMode: mode });
+    get().fetchTrend();
+  },
   setSelectedTimeSlot: (slot) => set({ selectedTimeSlot: slot }),
   setVoteSuccess: (val) => set({ voteSuccess: val }),
   setLoading: (val) => set({ loading: val }),
@@ -170,14 +185,23 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   fetchTrend: async () => {
-    const { selectedLineId } = get();
+    const { selectedLineId, trendCompareMode } = get();
     if (!selectedLineId) return;
 
     try {
-      const res = await fetch(`/api/stats/${selectedLineId}/trend`);
+      const params = new URLSearchParams();
+      if (trendCompareMode && trendCompareMode !== 'none') {
+        params.append('compare', trendCompareMode);
+      }
+      const query = params.toString() ? `?${params.toString()}` : '';
+      const res = await fetch(`/api/stats/${selectedLineId}/trend${query}`);
       const data = await res.json();
       if (data.success) {
-        set({ currentTrend: data.data });
+        const comparison = data.data as TrendComparisonData;
+        set({
+          currentTrend: comparison.current || [],
+          trendComparison: comparison,
+        });
       }
     } catch {
       // silent fail for trend
