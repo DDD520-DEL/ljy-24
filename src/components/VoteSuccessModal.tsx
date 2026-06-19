@@ -23,7 +23,7 @@ const LEVEL_META: Record<VoteLevel, { emoji: string; label: string; gradient: st
 };
 
 export default function VoteSuccessModal() {
-  const { voteSuccess, setVoteSuccess, lastVoteLevel, submitFeedback } = useAppStore();
+  const { voteSuccess, setVoteSuccess, lastVoteLevel, submitFeedback, setShareGuideVisible } = useAppStore();
   const [feedback, setFeedback] = useState('');
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
@@ -35,6 +35,7 @@ export default function VoteSuccessModal() {
 
   const handleClose = () => {
     setVoteSuccess(false);
+    setShareGuideVisible(true);
     setFeedback('');
     setFeedbackSubmitted(false);
     setIsSubmittingFeedback(false);

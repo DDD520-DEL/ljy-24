@@ -67,6 +67,7 @@ interface AppState {
   heatmapDimension: HeatmapDimension;
   voteSuccess: boolean;
   lastVoteLevel: VoteLevel | null;
+  shareGuideVisible: boolean;
   loading: boolean;
   error: string | null;
   userId: string;
@@ -108,6 +109,7 @@ interface AppState {
   setSelectedTimeSlot: (slot: TimeSlot) => void;
   setHeatmapDimension: (dim: HeatmapDimension) => void;
   setVoteSuccess: (val: boolean) => void;
+  setShareGuideVisible: (val: boolean) => void;
   setLoading: (val: boolean) => void;
   setError: (err: string | null) => void;
   setHistoryFilterLineId: (id: string) => void;
@@ -152,6 +154,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   heatmapDimension: 'carriage',
   voteSuccess: false,
   lastVoteLevel: null,
+  shareGuideVisible: false,
   loading: false,
   error: null,
   userId: getOrCreateUserId(),
@@ -198,6 +201,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   setSelectedTimeSlot: (slot) => set({ selectedTimeSlot: slot }),
   setHeatmapDimension: (dim) => set({ heatmapDimension: dim }),
   setVoteSuccess: (val) => set({ voteSuccess: val }),
+  setShareGuideVisible: (val) => set({ shareGuideVisible: val }),
   setLoading: (val) => set({ loading: val }),
   setError: (err) => set({ error: err }),
   setHistoryFilterLineId: (id) => set({ historyFilterLineId: id }),

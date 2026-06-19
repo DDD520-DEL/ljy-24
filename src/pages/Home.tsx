@@ -6,6 +6,7 @@ import CarriagePicker from '@/components/CarriagePicker';
 import StationPicker from '@/components/StationPicker';
 import VoteButtons from '@/components/VoteButtons';
 import VoteSuccessModal from '@/components/VoteSuccessModal';
+import ShareGuideBar from '@/components/ShareGuideBar';
 import ImpactPanel from '@/components/ImpactPanel';
 import Footer from '@/components/Footer';
 import { Link } from 'react-router-dom';
@@ -25,6 +26,7 @@ export default function Home() {
     <div className="min-h-screen flex flex-col">
       <Header />
       <VoteSuccessModal />
+      <ShareGuideBar />
 
       <main className="container mx-auto px-4 py-8 sm:py-12">
         <div className="max-w-2xl mx-auto">
