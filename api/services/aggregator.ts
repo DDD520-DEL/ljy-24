@@ -8,21 +8,28 @@ function calculateTemperatureScore(cold: number, comfortable: number, hot: numbe
 }
 
 function generateCrowdLevel(timeSlot: TimeSlot, carriageNumber: number): number {
-  const hour = new Date().getHours();
   let baseLevel: number;
 
-  if (timeSlot === 'morning' || (hour >= 7 && hour <= 9)) {
-    baseLevel = 4;
-  } else if (timeSlot === 'evening' || (hour >= 17 && hour <= 19)) {
-    baseLevel = 4;
-  } else if (timeSlot === 'offpeak') {
-    baseLevel = 2;
-  } else {
-    if (hour >= 7 && hour <= 9) baseLevel = 4;
-    else if (hour >= 17 && hour <= 19) baseLevel = 4;
-    else if (hour >= 11 && hour <= 14) baseLevel = 3;
-    else if (hour >= 22 || hour <= 6) baseLevel = 1;
-    else baseLevel = 2;
+  switch (timeSlot) {
+    case 'morning':
+      baseLevel = 4;
+      break;
+    case 'evening':
+      baseLevel = 4;
+      break;
+    case 'offpeak':
+      baseLevel = 2;
+      break;
+    case 'all':
+    default: {
+      const hour = new Date().getHours();
+      if (hour >= 7 && hour <= 9) baseLevel = 4;
+      else if (hour >= 17 && hour <= 19) baseLevel = 4;
+      else if (hour >= 11 && hour <= 14) baseLevel = 3;
+      else if (hour >= 22 || hour <= 6) baseLevel = 1;
+      else baseLevel = 2;
+      break;
+    }
   }
 
   const variation = Math.floor(Math.random() * 3) - 1;
