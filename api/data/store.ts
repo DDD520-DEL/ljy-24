@@ -134,8 +134,7 @@ function injectAnomalyTestData(votes: Vote[], now: number): void {
   }
 }
 
-function generateMockUserVotes(baseVotes: Vote[], lines: MetroLine[]): Vote[] {
-  const mockUserId = 'user_mock_history';
+function generateMockUserVotes(baseVotes: Vote[], lines: MetroLine[], userId: string): Vote[] {
   const userVotes: Vote[] = [];
   const now = Date.now();
 
@@ -182,7 +181,7 @@ function generateMockUserVotes(baseVotes: Vote[], lines: MetroLine[]): Vote[] {
       level,
       timestamp,
       timeSlot,
-      userId: mockUserId,
+      userId,
       snapshotScore,
       snapshotColdCount: coldCount,
       snapshotComfortableCount: comfortableCount,
@@ -197,11 +196,12 @@ function generateMockUserVotes(baseVotes: Vote[], lines: MetroLine[]): Vote[] {
 class DataStore {
   private votes: Vote[] = [];
   private favorites: Map<string, FavoriteLine[]> = new Map();
+  private initializedUsers: Set<string> = new Set();
 
   constructor() {
     const baseVotes = generateMockVotes();
-    const userVotes = generateMockUserVotes(baseVotes, LINES);
-    this.votes = [...baseVotes, ...userVotes];
+    this.votes = [...baseVotes];
+    this.ensureUserHistoryData('user_mock_history');
   }
 
   getLines(): MetroLine[] {
@@ -257,6 +257,18 @@ class DataStore {
 
     this.votes.push(vote);
     return vote;
+  }
+
+  ensureUserHistoryData(userId: string): void {
+    if (this.initializedUsers.has(userId)) return;
+    this.initializedUsers.add(userId);
+
+    const existingCount = this.votes.filter((v) => v.userId === userId).length;
+    if (existingCount > 0) return;
+
+    const baseVotes = this.votes.filter((v) => !v.userId);
+    const newUserVotes = generateMockUserVotes(baseVotes, LINES, userId);
+    this.votes.push(...newUserVotes);
   }
 
   getUserVotes(userId: string, lineId?: string, timeSlot?: TimeSlot): Vote[] {

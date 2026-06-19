@@ -232,6 +232,16 @@ export default function VoteHistory() {
     fetchVoteHistory();
   }, [fetchVoteHistory, historyFilterLineId, historyFilterTimeSlot]);
 
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchVoteHistory();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [fetchVoteHistory]);
+
   const stats = useMemo(() => {
     const total = voteHistory.length;
     const cold = voteHistory.filter((v) => v.level === 'cold').length;

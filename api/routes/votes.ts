@@ -47,11 +47,9 @@ router.get('/history', (req: Request, res: Response) => {
     return;
   }
 
-  const effectiveUserId = userId.startsWith('user_') && !userId.includes('mock')
-    ? 'user_mock_history'
-    : userId;
+  dataStore.ensureUserHistoryData(userId);
 
-  const userVotes = dataStore.getUserVotes(effectiveUserId, lineId, timeSlot);
+  const userVotes = dataStore.getUserVotes(userId, lineId, timeSlot);
 
   const records: VoteHistoryRecord[] = userVotes.map((v) => {
     const line = dataStore.getLineById(v.lineId);
