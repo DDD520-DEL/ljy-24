@@ -46,6 +46,8 @@ export interface VoteHistoryRecord extends Vote {
   lineColor: string;
 }
 
+export type TemperatureTrend = 'rising' | 'falling' | 'stable';
+
 export interface CarriageStats {
   carriageNumber: number;
   coldCount: number;
@@ -53,6 +55,7 @@ export interface CarriageStats {
   hotCount: number;
   totalCount: number;
   temperatureScore: number;
+  trend: TemperatureTrend;
 }
 
 export interface StationSectionStats {

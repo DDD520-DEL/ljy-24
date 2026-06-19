@@ -1,6 +1,7 @@
 import { useAppStore } from '@/store/appStore';
 import { getHeatColorClass, getHeatLabel, getHeatBgColor } from '@/utils/heatmap';
-import { Snowflake, Flame, Users, MessageSquare, MapPin } from 'lucide-react';
+import { Snowflake, Flame, Users, MessageSquare, MapPin, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import type { TemperatureTrend } from '../../shared/types.js';
 
 export default function TrainHeatmap() {
   const {
@@ -13,6 +14,31 @@ export default function TrainHeatmap() {
     recordCarriageView,
   } = useAppStore();
   const line = lines.find((l) => l.id === selectedLineId);
+
+  const renderTrendIcon = (trend: TemperatureTrend) => {
+    if (trend === 'rising') {
+      return (
+        <div className="flex items-center gap-0.5 text-orange-300" title="预测未来1小时可能变热">
+          <TrendingUp className="w-3 h-3" />
+          <span className="text-[9px] font-medium">变热</span>
+        </div>
+      );
+    }
+    if (trend === 'falling') {
+      return (
+        <div className="flex items-center gap-0.5 text-blue-300" title="预测未来1小时可能变冷">
+          <TrendingDown className="w-3 h-3" />
+          <span className="text-[9px] font-medium">变冷</span>
+        </div>
+      );
+    }
+    return (
+      <div className="flex items-center gap-0.5 text-slate-300" title="趋势稳定">
+        <Minus className="w-3 h-3" />
+        <span className="text-[9px] font-medium">稳定</span>
+      </div>
+    );
+  };
 
   if (!line || !currentLineStats) {
     return (
@@ -66,6 +92,12 @@ export default function TrainHeatmap() {
           <div className="flex-1 heat-hot" />
         </div>
 
+        <div className="flex items-center gap-4 mb-4 text-[10px] text-slate-400">
+          <span className="flex items-center gap-1"><TrendingUp className="w-3 h-3 text-orange-400" /> 预测变热</span>
+          <span className="flex items-center gap-1"><TrendingDown className="w-3 h-3 text-blue-400" /> 预测变冷</span>
+          <span className="flex items-center gap-1"><Minus className="w-3 h-3 text-slate-400" /> 趋势稳定</span>
+        </div>
+
         {isCarriageView && (
           <>
             <div className="flex items-center gap-2 mb-4 text-xs text-slate-400">
@@ -117,6 +149,7 @@ export default function TrainHeatmap() {
                               </div>
                             )}
                           </div>
+                          {renderTrendIcon(carriage.trend)}
                         </div>
 
                         <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-black/20 backdrop-blur-sm">

@@ -1,4 +1,4 @@
-import type { Vote, CarriageStats, LineStats, TrendData, TimeSlot, StationSectionStats, StationSection } from '../../shared/types.js';
+import type { Vote, CarriageStats, LineStats, TrendData, TimeSlot, StationSectionStats, StationSection, TemperatureTrend } from '../../shared/types.js';
 import { dataStore } from '../data/store.js';
 
 function calculateTemperatureScore(cold: number, comfortable: number, hot: number): number {
@@ -7,9 +7,57 @@ function calculateTemperatureScore(cold: number, comfortable: number, hot: numbe
   return Math.round(((hot - cold) / total) * 100);
 }
 
+const TREND_WINDOW_HOURS = 3;
+const TREND_THRESHOLD = 10;
+
+function predictCarriageTrend(lineId: string, carriageNumber: number): TemperatureTrend {
+  const now = Date.now();
+  const windowMs = TREND_WINDOW_HOURS * 3600 * 1000;
+  const votes = dataStore.getVotesByLine(lineId).filter(
+    (v) => v.carriageNumber === carriageNumber && v.timestamp >= now - windowMs,
+  );
+
+  if (votes.length < 3) return 'stable';
+
+  const bucketSize = windowMs / TREND_WINDOW_HOURS;
+  const buckets: { cold: number; comfortable: number; hot: number }[] = [];
+
+  for (let i = 0; i < TREND_WINDOW_HOURS; i++) {
+    const bucketStart = now - windowMs + i * bucketSize;
+    const bucketEnd = bucketStart + bucketSize;
+    const bucketVotes = votes.filter((v) => v.timestamp >= bucketStart && v.timestamp < bucketEnd);
+    buckets.push({
+      cold: bucketVotes.filter((v) => v.level === 'cold').length,
+      comfortable: bucketVotes.filter((v) => v.level === 'comfortable').length,
+      hot: bucketVotes.filter((v) => v.level === 'hot').length,
+    });
+  }
+
+  const scores = buckets.map((b) => calculateTemperatureScore(b.cold, b.comfortable, b.hot));
+  const validScores = scores.filter((s) => {
+    const idx = scores.indexOf(s);
+    return buckets[idx].cold + buckets[idx].comfortable + buckets[idx].hot > 0;
+  });
+
+  if (validScores.length < 2) return 'stable';
+
+  let risingCount = 0;
+  let fallingCount = 0;
+  for (let i = 1; i < validScores.length; i++) {
+    const diff = validScores[i] - validScores[i - 1];
+    if (diff > TREND_THRESHOLD) risingCount++;
+    else if (diff < -TREND_THRESHOLD) fallingCount++;
+  }
+
+  if (risingCount > fallingCount && risingCount >= 1) return 'rising';
+  if (fallingCount > risingCount && fallingCount >= 1) return 'falling';
+  return 'stable';
+}
+
 export function aggregateCarriageStats(
   votes: Vote[],
   carriageCount: number,
+  lineId?: string,
 ): CarriageStats[] {
   const stats: CarriageStats[] = [];
 
@@ -27,6 +75,7 @@ export function aggregateCarriageStats(
       hotCount,
       totalCount,
       temperatureScore: calculateTemperatureScore(coldCount, comfortableCount, hotCount),
+      trend: lineId ? predictCarriageTrend(lineId, i) : 'stable',
     });
   }
 
@@ -65,7 +114,7 @@ export function aggregateLineStats(lineId: string, timeSlot: TimeSlot): LineStat
   if (!line) return null;
 
   const votes = dataStore.getVotesByLine(lineId, timeSlot);
-  const carriages = aggregateCarriageStats(votes, line.carriageCount);
+  const carriages = aggregateCarriageStats(votes, line.carriageCount, lineId);
   const stationSections = aggregateStationSectionStats(votes, line.stationSections);
 
   const totalVotes = votes.length;
