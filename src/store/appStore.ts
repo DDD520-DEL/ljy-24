@@ -95,6 +95,8 @@ interface AppState {
   announcementsLoading: boolean;
   announcementsCollapsed: boolean;
   dismissedAnnouncementIds: Set<string>;
+  lastUpdated: Date | null;
+  refreshLoading: boolean;
 
   setLines: (lines: MetroLine[]) => void;
   setSelectedLineId: (id: string | null) => void;
@@ -134,6 +136,7 @@ interface AppState {
   fetchAnnouncements: () => Promise<void>;
   toggleAnnouncementsCollapsed: () => void;
   dismissAnnouncement: (announcementId: string) => void;
+  refreshData: () => Promise<void>;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -177,6 +180,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   announcementsLoading: false,
   announcementsCollapsed: getStoredAnnouncementsCollapsed(),
   dismissedAnnouncementIds: getStoredDismissedAnnouncementIds(),
+  lastUpdated: null,
+  refreshLoading: false,
 
   setLines: (lines) => set({ lines }),
   setSelectedLineId: (id) => {
@@ -312,7 +317,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       const res = await fetch(`/api/stats/${selectedLineId}?timeSlot=${selectedTimeSlot}`);
       const data = await res.json();
       if (data.success) {
-        set({ currentLineStats: data.data, loading: false });
+        set({ currentLineStats: data.data, loading: false, lastUpdated: new Date() });
       } else {
         set({ error: data.error || '获取统计失败', loading: false });
       }
@@ -642,5 +647,21 @@ export const useAppStore = create<AppState>((set, get) => ({
       // ignore
     }
     set({ dismissedAnnouncementIds: newDismissed });
+  },
+
+  refreshData: async () => {
+    const { selectedLineId } = get();
+    if (!selectedLineId) return;
+
+    set({ refreshLoading: true });
+    try {
+      await Promise.all([
+        get().fetchStats(),
+        get().fetchTrend(),
+        get().fetchFeedbackCounts(),
+      ]);
+    } finally {
+      set({ refreshLoading: false });
+    }
   },
 }));

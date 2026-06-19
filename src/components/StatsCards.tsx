@@ -1,8 +1,24 @@
 import { useAppStore } from '@/store/appStore';
-import { Snowflake, Flame, ThumbsUp, Vote, Download, Loader2 } from 'lucide-react';
+import { Snowflake, Flame, ThumbsUp, Vote, Download, Loader2, RefreshCw, Clock } from 'lucide-react';
+
+function formatLastUpdated(date: Date | null): string {
+  if (!date) return '-';
+  const now = new Date();
+  const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (diff < 60) return '刚刚';
+  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`;
+  
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${month}-${day} ${hours}:${minutes}`;
+}
 
 export default function StatsCards() {
-  const { currentLineStats, heatmapDimension, exportStats, exportLoading } = useAppStore();
+  const { currentLineStats, heatmapDimension, exportStats, exportLoading, lastUpdated, refreshLoading, refreshData } = useAppStore();
 
   if (!currentLineStats) return null;
 
@@ -62,19 +78,39 @@ export default function StatsCards() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-medium text-slate-400">统计概览</h2>
-        <button
-          onClick={exportStats}
-          disabled={exportLoading}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-metro-card border border-metro-border text-slate-300 hover:border-metro-blue/50 hover:text-metro-lightBlue transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {exportLoading ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <Download className="w-3.5 h-3.5" />
-          )}
-          {exportLoading ? '导出中...' : '导出CSV'}
-        </button>
+        <div className="flex items-center gap-3">
+          <h2 className="text-sm font-medium text-slate-400">统计概览</h2>
+          <div className="flex items-center gap-1.5 text-xs text-slate-500">
+            <Clock className="w-3.5 h-3.5" />
+            <span>更新于 {formatLastUpdated(lastUpdated)}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={refreshData}
+            disabled={refreshLoading}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-metro-card border border-metro-border text-slate-300 hover:border-metro-blue/50 hover:text-metro-lightBlue transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {refreshLoading ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <RefreshCw className="w-3.5 h-3.5" />
+            )}
+            {refreshLoading ? '刷新中...' : '刷新'}
+          </button>
+          <button
+            onClick={exportStats}
+            disabled={exportLoading}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-metro-card border border-metro-border text-slate-300 hover:border-metro-blue/50 hover:text-metro-lightBlue transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {exportLoading ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Download className="w-3.5 h-3.5" />
+            )}
+            {exportLoading ? '导出中...' : '导出CSV'}
+          </button>
+        </div>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {stats.map((stat, idx) => {
