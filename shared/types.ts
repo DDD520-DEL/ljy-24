@@ -171,3 +171,18 @@ export interface WeatherData {
   windSpeed: number;
   updatedAt: number;
 }
+
+export type AnnouncementType = 'info' | 'warning' | 'success' | 'maintenance';
+
+export interface Announcement {
+  id: string;
+  type: AnnouncementType;
+  title: string;
+  content: string;
+  link?: string;
+  linkText?: string;
+  createdAt: number;
+  startAt: number;
+  endAt: number;
+  priority: number;
+}

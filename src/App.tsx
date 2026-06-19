@@ -3,10 +3,12 @@ import Home from '@/pages/Home';
 import Heatmap from '@/pages/Heatmap';
 import VoteHistory from '@/pages/VoteHistory';
 import TemperatureAlertBanner from '@/components/TemperatureAlertBanner';
+import AnnouncementBar from '@/components/AnnouncementBar';
 
 export default function App() {
   return (
     <Router>
+      <AnnouncementBar />
       <TemperatureAlertBanner />
       <Routes>
         <Route path="/" element={<Home />} />

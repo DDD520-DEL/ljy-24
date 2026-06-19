@@ -15,6 +15,7 @@ import type {
   HeatmapDimension,
   UserImpactStats,
   WeatherData,
+  Announcement,
 } from '../../shared/types.js';
 
 function getOrCreateUserId(): string {
@@ -69,6 +70,10 @@ interface AppState {
   userImpactLoading: boolean;
   weather: WeatherData | null;
   weatherLoading: boolean;
+  announcements: Announcement[];
+  announcementsLoading: boolean;
+  announcementsCollapsed: boolean;
+  dismissedAnnouncementIds: Set<string>;
 
   setLines: (lines: MetroLine[]) => void;
   setSelectedLineId: (id: string | null) => void;
@@ -105,6 +110,9 @@ interface AppState {
   fetchUserImpactStats: () => Promise<void>;
   fetchWeather: () => Promise<void>;
   recordCarriageView: (lineId: string, carriageNumber: number) => Promise<void>;
+  fetchAnnouncements: () => Promise<void>;
+  toggleAnnouncementsCollapsed: () => void;
+  dismissAnnouncement: (announcementId: string) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -144,6 +152,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   userImpactLoading: false,
   weather: null,
   weatherLoading: false,
+  announcements: [],
+  announcementsLoading: false,
+  announcementsCollapsed: false,
+  dismissedAnnouncementIds: new Set<string>(),
 
   setLines: (lines) => set({ lines }),
   setSelectedLineId: (id) => {
@@ -570,5 +582,31 @@ export const useAppStore = create<AppState>((set, get) => ({
     } catch {
       // silent fail
     }
+  },
+
+  fetchAnnouncements: async () => {
+    set({ announcementsLoading: true });
+    try {
+      const res = await fetch('/api/announcements');
+      const data = await res.json();
+      if (data.success) {
+        set({ announcements: data.data.announcements || [], announcementsLoading: false });
+      } else {
+        set({ announcementsLoading: false });
+      }
+    } catch {
+      set({ announcementsLoading: false });
+    }
+  },
+
+  toggleAnnouncementsCollapsed: () => {
+    set((state) => ({ announcementsCollapsed: !state.announcementsCollapsed }));
+  },
+
+  dismissAnnouncement: (announcementId: string) => {
+    const { dismissedAnnouncementIds } = get();
+    const newDismissed = new Set(dismissedAnnouncementIds);
+    newDismissed.add(announcementId);
+    set({ dismissedAnnouncementIds: newDismissed });
   },
 }));

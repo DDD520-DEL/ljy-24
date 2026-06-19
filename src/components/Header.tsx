@@ -5,9 +5,25 @@ import WeatherWidget from '@/components/WeatherWidget';
 
 export default function Header() {
   const location = useLocation();
-  const { anomalies, dismissedAnomalyIds } = useAppStore();
+  const { anomalies, dismissedAnomalyIds, announcements, dismissedAnnouncementIds, announcementsCollapsed } = useAppStore();
   const activeAnomalies = anomalies.filter(a => !dismissedAnomalyIds.has(a.id));
-  const bannerHeight = activeAnomalies.length * 88;
+  const activeAnnouncements = announcements.filter(a => !dismissedAnnouncementIds.has(a.id));
+
+  const anomalyBannerHeight = activeAnomalies.length * 88;
+
+  let announcementBannerHeight = 0;
+  if (activeAnnouncements.length > 0) {
+    if (announcementsCollapsed) {
+      announcementBannerHeight = 41;
+    } else {
+      announcementBannerHeight = 76 + 41;
+      if (activeAnnouncements.length > 1) {
+        announcementBannerHeight += 41;
+      }
+    }
+  }
+
+  const bannerHeight = anomalyBannerHeight + announcementBannerHeight;
 
   return (
     <header
