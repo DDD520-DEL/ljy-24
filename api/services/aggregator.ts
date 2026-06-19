@@ -8,49 +8,82 @@ function calculateTemperatureScore(cold: number, comfortable: number, hot: numbe
 }
 
 const TREND_WINDOW_HOURS = 3;
-const TREND_THRESHOLD = 10;
+const TREND_THRESHOLD = 15;
+const MIN_VOTES_PER_BUCKET = 2;
 
 function predictCarriageTrend(lineId: string, carriageNumber: number): TemperatureTrend {
   const now = Date.now();
   const windowMs = TREND_WINDOW_HOURS * 3600 * 1000;
-  const votes = dataStore.getVotesByLine(lineId).filter(
+  const allVotes = dataStore.getVotesByLine(lineId);
+  const votes = allVotes.filter(
     (v) => v.carriageNumber === carriageNumber && v.timestamp >= now - windowMs,
   );
 
   if (votes.length < 3) return 'stable';
 
   const bucketSize = windowMs / TREND_WINDOW_HOURS;
-  const buckets: { cold: number; comfortable: number; hot: number }[] = [];
+
+  interface Bucket {
+    cold: number;
+    comfortable: number;
+    hot: number;
+    total: number;
+    score: number;
+    startMs: number;
+    endMs: number;
+  }
+  const buckets: Bucket[] = [];
 
   for (let i = 0; i < TREND_WINDOW_HOURS; i++) {
     const bucketStart = now - windowMs + i * bucketSize;
     const bucketEnd = bucketStart + bucketSize;
-    const bucketVotes = votes.filter((v) => v.timestamp >= bucketStart && v.timestamp < bucketEnd);
+    const bucketVotes = votes.filter(
+      (v) => v.timestamp >= bucketStart && v.timestamp < bucketEnd,
+    );
+    const cold = bucketVotes.filter((v) => v.level === 'cold').length;
+    const comfortable = bucketVotes.filter((v) => v.level === 'comfortable').length;
+    const hot = bucketVotes.filter((v) => v.level === 'hot').length;
+    const total = cold + comfortable + hot;
+
     buckets.push({
-      cold: bucketVotes.filter((v) => v.level === 'cold').length,
-      comfortable: bucketVotes.filter((v) => v.level === 'comfortable').length,
-      hot: bucketVotes.filter((v) => v.level === 'hot').length,
+      cold,
+      comfortable,
+      hot,
+      total,
+      score: total > 0 ? calculateTemperatureScore(cold, comfortable, hot) : 0,
+      startMs: bucketStart,
+      endMs: bucketEnd,
     });
   }
 
-  const scores = buckets.map((b) => calculateTemperatureScore(b.cold, b.comfortable, b.hot));
-  const validScores = scores.filter((s) => {
-    const idx = scores.indexOf(s);
-    return buckets[idx].cold + buckets[idx].comfortable + buckets[idx].hot > 0;
-  });
+  const validBuckets = buckets.filter((b) => b.total >= MIN_VOTES_PER_BUCKET);
 
-  if (validScores.length < 2) return 'stable';
+  if (validBuckets.length < 2) return 'stable';
 
-  let risingCount = 0;
-  let fallingCount = 0;
-  for (let i = 1; i < validScores.length; i++) {
-    const diff = validScores[i] - validScores[i - 1];
-    if (diff > TREND_THRESHOLD) risingCount++;
-    else if (diff < -TREND_THRESHOLD) fallingCount++;
+  let risingWeight = 0;
+  let fallingWeight = 0;
+
+  for (let i = 1; i < validBuckets.length; i++) {
+    const older = validBuckets[i - 1];
+    const newer = validBuckets[i];
+    const diff = newer.score - older.score;
+    const confidence = Math.min(older.total, newer.total);
+
+    if (diff > TREND_THRESHOLD) {
+      risingWeight += confidence;
+    } else if (diff < -TREND_THRESHOLD) {
+      fallingWeight += confidence;
+    }
   }
 
-  if (risingCount > fallingCount && risingCount >= 1) return 'rising';
-  if (fallingCount > risingCount && fallingCount >= 1) return 'falling';
+  const minConfidence = MIN_VOTES_PER_BUCKET;
+
+  if (risingWeight > fallingWeight && risingWeight >= minConfidence) {
+    return 'rising';
+  }
+  if (fallingWeight > risingWeight && fallingWeight >= minConfidence) {
+    return 'falling';
+  }
   return 'stable';
 }
 
