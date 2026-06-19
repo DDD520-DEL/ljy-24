@@ -72,6 +72,7 @@ export interface CarriageStats {
   totalCount: number;
   temperatureScore: number;
   trend: TemperatureTrend;
+  crowdLevel: number;
 }
 
 export interface StationSectionStats {

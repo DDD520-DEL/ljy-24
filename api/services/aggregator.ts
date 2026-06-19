@@ -7,6 +7,32 @@ function calculateTemperatureScore(cold: number, comfortable: number, hot: numbe
   return Math.round(((hot - cold) / total) * 100);
 }
 
+function generateCrowdLevel(timeSlot: TimeSlot, carriageNumber: number): number {
+  const hour = new Date().getHours();
+  let baseLevel: number;
+
+  if (timeSlot === 'morning' || (hour >= 7 && hour <= 9)) {
+    baseLevel = 4;
+  } else if (timeSlot === 'evening' || (hour >= 17 && hour <= 19)) {
+    baseLevel = 4;
+  } else if (timeSlot === 'offpeak') {
+    baseLevel = 2;
+  } else {
+    if (hour >= 7 && hour <= 9) baseLevel = 4;
+    else if (hour >= 17 && hour <= 19) baseLevel = 4;
+    else if (hour >= 11 && hour <= 14) baseLevel = 3;
+    else if (hour >= 22 || hour <= 6) baseLevel = 1;
+    else baseLevel = 2;
+  }
+
+  const variation = Math.floor(Math.random() * 3) - 1;
+  const carriageVariation = carriageNumber % 3 === 0 ? 1 : (carriageNumber % 3 === 1 ? -1 : 0);
+  let level = baseLevel + variation + carriageVariation;
+
+  level = Math.max(0, Math.min(5, level));
+  return level;
+}
+
 const TREND_WINDOW_HOURS = 3;
 const TREND_THRESHOLD = 15;
 const MIN_VOTES_PER_BUCKET = 2;
@@ -91,6 +117,7 @@ export function aggregateCarriageStats(
   votes: Vote[],
   carriageCount: number,
   lineId?: string,
+  timeSlot: TimeSlot = 'all',
 ): CarriageStats[] {
   const stats: CarriageStats[] = [];
 
@@ -109,6 +136,7 @@ export function aggregateCarriageStats(
       totalCount,
       temperatureScore: calculateTemperatureScore(coldCount, comfortableCount, hotCount),
       trend: lineId ? predictCarriageTrend(lineId, i) : 'stable',
+      crowdLevel: generateCrowdLevel(timeSlot, i),
     });
   }
 
@@ -147,7 +175,7 @@ export function aggregateLineStats(lineId: string, timeSlot: TimeSlot): LineStat
   if (!line) return null;
 
   const votes = dataStore.getVotesByLine(lineId, timeSlot);
-  const carriages = aggregateCarriageStats(votes, line.carriageCount, lineId);
+  const carriages = aggregateCarriageStats(votes, line.carriageCount, lineId, timeSlot);
   const stationSections = aggregateStationSectionStats(votes, line.stationSections);
 
   const totalVotes = votes.length;

@@ -1,6 +1,6 @@
 import { useAppStore } from '@/store/appStore';
 import { getHeatColorClass, getHeatLabel, getHeatBgColor } from '@/utils/heatmap';
-import { Snowflake, Flame, Users, MessageSquare, MapPin, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Snowflake, Flame, Users, MessageSquare, MapPin, TrendingUp, TrendingDown, Minus, User } from 'lucide-react';
 import type { TemperatureTrend } from '../../shared/types.js';
 
 export default function TrainHeatmap() {
@@ -36,6 +36,27 @@ export default function TrainHeatmap() {
       <div className="flex items-center gap-0.5 text-slate-300" title="趋势稳定">
         <Minus className="w-3 h-3" />
         <span className="text-[9px] font-medium">稳定</span>
+      </div>
+    );
+  };
+
+  const renderCrowdIcons = (crowdLevel: number) => {
+    const maxIcons = 5;
+    const activeIcons = Math.max(0, Math.min(maxIcons, crowdLevel));
+    const crowdLabel = activeIcons === 0 ? '空' : activeIcons <= 2 ? '宽松' : activeIcons <= 3 ? '适中' : activeIcons <= 4 ? '拥挤' : '爆满';
+
+    return (
+      <div className="flex flex-col items-center gap-0.5" title={`拥挤度：${crowdLabel}（${activeIcons}/${maxIcons}）`}>
+        <div className="flex items-center gap-0.5">
+          {Array.from({ length: maxIcons }).map((_, idx) => (
+            <User
+              key={idx}
+              className={`w-2.5 h-2.5 ${idx < activeIcons ? 'text-white' : 'text-white/20'}`}
+              fill={idx < activeIcons ? 'currentColor' : 'none'}
+            />
+          ))}
+        </div>
+        <span className="text-[8px] opacity-70">{crowdLabel}</span>
       </div>
     );
   };
@@ -98,6 +119,24 @@ export default function TrainHeatmap() {
           <span className="flex items-center gap-1"><Minus className="w-3 h-3 text-slate-400" /> 趋势稳定</span>
         </div>
 
+        <div className="flex items-center gap-4 mb-4 text-[10px] text-slate-400">
+          <span className="flex items-center gap-1">
+            <User className="w-3 h-3 text-slate-300" />
+            拥挤度：
+            <User className="w-3 h-3 text-white/20" />
+            <span className="opacity-70">空</span>
+            <User className="w-3 h-3 text-slate-300" />
+            <span className="opacity-70">宽松</span>
+            <User className="w-3 h-3 text-slate-300" fill="currentColor" />
+            <span className="opacity-70">适中</span>
+            <User className="w-3 h-3 text-white" fill="currentColor" />
+            <span className="opacity-70">拥挤</span>
+            <User className="w-3 h-3 text-white" fill="currentColor" />
+            <User className="w-3 h-3 text-white" fill="currentColor" />
+            <span className="opacity-70">爆满</span>
+          </span>
+        </div>
+
         {isCarriageView && (
           <>
             <div className="flex items-center gap-2 mb-4 text-xs text-slate-400">
@@ -139,11 +178,14 @@ export default function TrainHeatmap() {
                           <div className="flex items-center justify-center w-8 h-8 rounded-full bg-black/30 backdrop-blur-sm">
                             <span className="font-bold font-display text-lg">{carriage.carriageNumber}</span>
                           </div>
-                          <div className="text-center">
-                            <div className="text-[11px] opacity-90 font-medium">{getHeatLabel(carriage.temperatureScore)}</div>
-                            <div className="text-[10px] opacity-70">{carriage.totalCount}票</div>
+                          <div className="text-center space-y-1">
+                            <div>
+                              <div className="text-[11px] opacity-90 font-medium">{getHeatLabel(carriage.temperatureScore)}</div>
+                              <div className="text-[10px] opacity-70">{carriage.totalCount}票</div>
+                            </div>
+                            {renderCrowdIcons(carriage.crowdLevel)}
                             {feedbackCount > 0 && (
-                              <div className="flex items-center justify-center gap-1 mt-1 text-[9px] opacity-80">
+                              <div className="flex items-center justify-center gap-1 text-[9px] opacity-80">
                                 <MessageSquare className="w-2.5 h-2.5" />
                                 <span>{feedbackCount}条留言</span>
                               </div>

@@ -94,7 +94,7 @@ router.get('/:lineId/export', (req: Request, res: Response) => {
   rows.push([]);
 
   rows.push(['车厢统计数据']);
-  rows.push(['车厢号', '冷票数', '舒适票数', '热票数', '总票数', '温度评分']);
+  rows.push(['车厢号', '冷票数', '舒适票数', '热票数', '总票数', '温度评分', '拥挤度']);
   for (const c of stats.carriages) {
     rows.push([
       String(c.carriageNumber),
@@ -103,6 +103,7 @@ router.get('/:lineId/export', (req: Request, res: Response) => {
       String(c.hotCount),
       String(c.totalCount),
       String(c.temperatureScore),
+      String(c.crowdLevel),
     ]);
   }
   rows.push([]);
