@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { CircleHelp, ChevronDown, ThermometerSnowflake, Thermometer, Flame, BarChart3, RefreshCw, Vote, Palette, Clock, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -215,9 +216,7 @@ export default function FAQ() {
         </div>
       </main>
 
-      <footer className="py-8 text-center text-slate-600 text-xs animate-fade-in">
-        让通勤更舒适 · 地铁温度计
-      </footer>
+      <Footer />
     </div>
   );
 }

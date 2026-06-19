@@ -7,6 +7,7 @@ import StationPicker from '@/components/StationPicker';
 import VoteButtons from '@/components/VoteButtons';
 import VoteSuccessModal from '@/components/VoteSuccessModal';
 import ImpactPanel from '@/components/ImpactPanel';
+import Footer from '@/components/Footer';
 import { Link } from 'react-router-dom';
 import { BarChart3, Info } from 'lucide-react';
 
@@ -87,9 +88,7 @@ export default function Home() {
         </div>
       </main>
 
-      <footer className="py-8 text-center text-slate-600 text-xs animate-fade-in">
-        让通勤更舒适 · 地铁温度计
-      </footer>
+      <Footer />
     </div>
   );
 }

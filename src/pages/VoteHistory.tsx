@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useAppStore } from '@/store/appStore';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { History, Clock, Thermometer, ThermometerSnowflake, Flame, Filter, Inbox } from 'lucide-react';
 import type { VoteHistoryRecord, TimeSlot } from '../../shared/types.js';
 import { getTimeSlotLabel, getHeatBgColor, getHeatLabel } from '@/utils/heatmap';
@@ -373,9 +374,7 @@ export default function VoteHistory() {
         </div>
       </main>
 
-      <footer className="py-8 text-center text-slate-600 text-xs animate-fade-in">
-        数据保存在本地 · 地铁温度计
-      </footer>
+      <Footer />
     </div>
   );
 }
