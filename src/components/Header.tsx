@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { ThermometerSun, BarChart3, History } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
+import WeatherWidget from '@/components/WeatherWidget';
 
 export default function Header() {
   const location = useLocation();
@@ -23,6 +24,8 @@ export default function Header() {
             <p className="text-xs text-slate-400 -mt-0.5">Metro Temp Vote</p>
           </div>
         </Link>
+
+        <WeatherWidget />
 
         <nav className="flex items-center gap-1">
           <Link

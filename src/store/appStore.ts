@@ -14,6 +14,7 @@ import type {
   FeedbackListResponse,
   HeatmapDimension,
   UserImpactStats,
+  WeatherData,
 } from '../../shared/types.js';
 
 function getOrCreateUserId(): string {
@@ -66,6 +67,8 @@ interface AppState {
   exportLoading: boolean;
   userImpactStats: UserImpactStats | null;
   userImpactLoading: boolean;
+  weather: WeatherData | null;
+  weatherLoading: boolean;
 
   setLines: (lines: MetroLine[]) => void;
   setSelectedLineId: (id: string | null) => void;
@@ -100,6 +103,7 @@ interface AppState {
   removeFavorite: (lineId: string) => Promise<boolean>;
   isFavorite: (lineId: string) => boolean;
   fetchUserImpactStats: () => Promise<void>;
+  fetchWeather: () => Promise<void>;
   recordCarriageView: (lineId: string, carriageNumber: number) => Promise<void>;
 }
 
@@ -138,6 +142,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   exportLoading: false,
   userImpactStats: null,
   userImpactLoading: false,
+  weather: null,
+  weatherLoading: false,
 
   setLines: (lines) => set({ lines }),
   setSelectedLineId: (id) => {
@@ -532,6 +538,21 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
     } catch {
       set({ userImpactLoading: false });
+    }
+  },
+
+  fetchWeather: async () => {
+    set({ weatherLoading: true });
+    try {
+      const res = await fetch('/api/weather');
+      const data = await res.json();
+      if (data.success) {
+        set({ weather: data.data, weatherLoading: false });
+      } else {
+        set({ weatherLoading: false });
+      }
+    } catch {
+      set({ weatherLoading: false });
     }
   },
 

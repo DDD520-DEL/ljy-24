@@ -162,3 +162,12 @@ export interface CarriageViewRecord {
   viewerUserId?: string;
   timestamp: number;
 }
+
+export interface WeatherData {
+  city: string;
+  temperature: number;
+  description: string;
+  humidity: number;
+  windSpeed: number;
+  updatedAt: number;
+}
