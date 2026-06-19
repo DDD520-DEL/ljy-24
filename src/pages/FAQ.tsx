@@ -157,7 +157,7 @@ export default function FAQ() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <Header />
 
       <main className="container mx-auto px-4 py-8 sm:py-12">

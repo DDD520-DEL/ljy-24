@@ -40,7 +40,7 @@ export default function Heatmap() {
   }, [selectedLineId, selectedTimeSlot, heatmapDimension, fetchStats, fetchTrend, fetchFeedbackCounts]);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <Header />
 
       <main className="container mx-auto px-4 py-8">
